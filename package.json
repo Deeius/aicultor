@@ -16,7 +16,10 @@
     "format:check": "prettier --check '**/*.{js,json,css,html,md}'",
     "security:audit": "npm audit --production",
     "security:check": "npm audit --audit-level=moderate",
-    "test": "echo 'Tests not yet configured'",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
     "deploy": "vercel --prod",
     "deploy:preview": "vercel"
   },
@@ -24,7 +27,10 @@
     "@anthropic-ai/sdk": "^0.39.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "eslint": "^8.57.0",
+    "jest": "^30.3.0",
+    "node-fetch": "^2.7.0",
     "prettier": "^3.2.5",
     "stylelint": "^16.2.1",
     "stylelint-config-standard": "^36.0.0"

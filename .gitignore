@@ -41,6 +41,7 @@ logs/
 # Testing
 coverage/
 .nyc_output/
+*.lcov
 
 # Temporary files
 *.tmp

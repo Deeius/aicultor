@@ -1,13 +1,18 @@
-import Anthropic from '@anthropic-ai/sdk';
+/**
+ * CommonJS wrapper for chat.js to enable testing
+ * This file exports the handler function for Jest tests
+ */
+
+const Anthropic = require('@anthropic-ai/sdk');
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const ALLOWED_MODEL = 'claude-sonnet-4-20250514';
 const MAX_TOKENS_CAP = 1500;
 
-// Contador simple en memoria por IP (se resetea con cada cold start)
+// Simple in-memory rate limiter
 const ipHits = new Map();
-const WINDOW_MS = 15 * 60 * 1000; // 15 minutos
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const MAX_HITS = 60;
 
 function checkRateLimit(ip) {
@@ -25,10 +30,10 @@ function checkRateLimit(ip) {
   return true;
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   // CORS
   const origin = req.headers.origin || '';
-  const allowed = process.env.FRONTEND_URL ? origin.startsWith(process.env.FRONTEND_URL) : true; // en preview/dev permitir todo
+  const allowed = process.env.FRONTEND_URL ? origin.startsWith(process.env.FRONTEND_URL) : true;
 
   res.setHeader('Access-Control-Allow-Origin', allowed ? origin : '');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -65,3 +70,5 @@ export default async function handler(req, res) {
     return res.status(err.status || 500).json({ error: err.message || 'Error del servidor.' });
   }
 }
+
+module.exports = { default: handler, handler };
