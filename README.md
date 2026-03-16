@@ -52,10 +52,10 @@ Este es el único paso manual importante — aquí es donde guardas tu clave de 
 1. En Vercel, entra a tu proyecto → **Settings → Environment Variables**
 2. Añade estas dos variables:
 
-| Name | Value |
-|------|-------|
-| `ANTHROPIC_API_KEY` | `sk-ant-...tu clave...` |
-| `FRONTEND_URL` | `https://jardin-verde.vercel.app` *(tu URL de Vercel)* |
+| Name                | Value                                                  |
+| ------------------- | ------------------------------------------------------ |
+| `ANTHROPIC_API_KEY` | `sk-ant-...tu clave...`                                |
+| `FRONTEND_URL`      | `https://jardin-verde.vercel.app` _(tu URL de Vercel)_ |
 
 3. Clic en **Save**
 4. Ve a **Deployments** → en el último deployment clic en **⋯ → Redeploy**
@@ -77,10 +77,10 @@ Settings → Limits → Monthly spend limit (recomendado: $10–20)
 
 ## Costes estimados
 
-| Servicio | Coste |
-|----------|-------|
+| Servicio                       | Coste                                |
+| ------------------------------ | ------------------------------------ |
 | Vercel (frontend + serverless) | **Gratis** hasta 100k peticiones/mes |
-| Anthropic API | ~$0.003 por sesión de usuario |
+| Anthropic API                  | ~$0.003 por sesión de usuario        |
 
 Con 1.000 usuarios al mes serían ~$3 en API.
 
@@ -89,11 +89,13 @@ Con 1.000 usuarios al mes serían ~$3 en API.
 ## Actualizaciones futuras
 
 Cada vez que hagas un cambio:
+
 ```bash
 git add .
 git commit -m "Descripción del cambio"
 git push
 ```
+
 Vercel redesplegará automáticamente en ~30 segundos.
 
 ---
@@ -111,6 +113,7 @@ vercel dev
 ```
 
 Crea un archivo `.env.local` en la raíz con:
+
 ```
 ANTHROPIC_API_KEY=sk-ant-...tu clave...
 ```

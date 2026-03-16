@@ -26,9 +26,7 @@ function checkRateLimit(ip) {
 export default async function handler(req, res) {
   // CORS
   const origin = req.headers.origin || '';
-  const allowed = process.env.FRONTEND_URL
-    ? origin.startsWith(process.env.FRONTEND_URL)
-    : true; // en preview/dev permitir todo
+  const allowed = process.env.FRONTEND_URL ? origin.startsWith(process.env.FRONTEND_URL) : true; // en preview/dev permitir todo
 
   res.setHeader('Access-Control-Allow-Origin', allowed ? origin : '');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');

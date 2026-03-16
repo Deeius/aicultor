@@ -4,19 +4,20 @@
     "es2021": true,
     "node": true
   },
-  "extends": [
-    "eslint:recommended"
-  ],
+  "extends": ["eslint:recommended"],
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module"
   },
   "rules": {
     "no-console": ["warn", { "allow": ["error", "warn"] }],
-    "no-unused-vars": ["error", {
-      "argsIgnorePattern": "^_",
-      "varsIgnorePattern": "^_"
-    }],
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "eqeqeq": ["error", "always"],
     "curly": ["error", "all"],
     "no-eval": "error",
@@ -30,10 +31,5 @@
     "no-throw-literal": "error",
     "require-await": "error"
   },
-  "ignorePatterns": [
-    "node_modules/",
-    ".vercel/",
-    "dist/",
-    "build/"
-  ]
+  "ignorePatterns": ["node_modules/", ".vercel/", "dist/", "build/"]
 }
