@@ -1,0 +1,7 @@
+node_modules
+.vercel
+dist
+build
+*.min.js
+*.min.css
+package-lock.json

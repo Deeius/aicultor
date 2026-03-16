@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jardín Verde · Mi Colección</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1a12;
+  --surface: #162019;
+  --surface2: #1e2e22;
+  --border: #2a3d2e;
+  --green-light: #7ec87a;
+  --green-mid: #4a9e52;
+  --green-dark: #2d6e35;
+  --gold: #c9a84c;
+  --sand: #e8d5a3;
+  --text: #d4e8d0;
+  --text-muted: #7a9e80;
+  --radius: 16px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: radial-gradient(ellipse at 20% 20%, rgba(78,158,82,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.05) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+.app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 0 20px 80px; }
+header { padding: 36px 0 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); margin-bottom: 32px; }
+.logo { display: flex; align-items: center; gap: 14px; }
+.logo-icon { width: 46px; height: 46px; background: linear-gradient(135deg, var(--green-dark), var(--green-mid)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 4px 16px rgba(74,158,82,0.3); }
+h1 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; }
+h1 span { display: block; font-size: 12px; font-family: 'DM Sans', sans-serif; font-weight: 300; color: var(--text-muted); margin-top: 4px; letter-spacing: 2px; text-transform: uppercase; }
+.stats { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; flex: 1; min-width: 130px; transition: border-color 0.2s; }
+.stat-card:hover { border-color: var(--green-mid); }
+.stat-icon { font-size: 26px; }
+.stat-num { font-size: 24px; font-weight: 700; font-family: 'Playfair Display', serif; color: var(--green-light); line-height: 1; }
+.stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 5px; width: fit-content; }
+.tab-btn { background: none; border: none; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+.tab-btn:hover { color: var(--text); background: var(--surface2); }
+.tab-btn.active { background: var(--green-dark); color: var(--green-light); box-shadow: 0 2px 8px rgba(45,110,53,0.4); }
+.section { display: none; }
+.section.active { display: block; }
+.filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 6px 14px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px; }
+.filter-btn:hover { border-color: var(--green-mid); color: var(--text); }
+.filter-btn.active { background: var(--green-dark); border-color: var(--green-mid); color: var(--green-light); }
+.plant-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.plant-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: all 0.25s; }
+.plant-card:hover { border-color: var(--green-mid); transform: translateY(-2px); box-shadow: var(--shadow); }
+.plant-card-img { width: 100%; height: 160px; background: var(--surface2); overflow: hidden; }
+.plant-card-img img { width: 100%; height: 100%; object-fit: cover; }
+.plant-card-img.placeholder { display: flex; align-items: center; justify-content: center; font-size: 60px; }
+.plant-card-body { padding: 18px; }
+.plant-name { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.plant-scientific { font-size: 11px; color: var(--text-muted); font-style: italic; margin-bottom: 10px; }
+.plant-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.meta-tag { font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 7px; color: var(--text-muted); }
+.type-badge { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; padding: 3px 9px; border-radius: 20px; font-weight: 600; }
+.badge-interior { background: rgba(126,200,122,0.15); color: var(--green-light); border: 1px solid rgba(126,200,122,0.3); }
+.badge-exterior { background: rgba(74,158,82,0.15); color: var(--green-mid); border: 1px solid rgba(74,158,82,0.3); }
+.badge-semilla { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+.card-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.wizard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.wizard-header { padding: 24px 28px 0; display: flex; align-items: center; justify-content: space-between; }
+.wizard-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--sand); }
+.wizard-step-indicator { display: flex; gap: 6px; align-items: center; }
+.step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+.step-dot.active { background: var(--green-light); box-shadow: 0 0 8px rgba(126,200,122,0.5); }
+.step-dot.done { background: var(--green-mid); }
+.wizard-body { padding: 24px 28px 28px; }
+.step { display: none; }
+.step.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.step-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--green-mid); font-weight: 600; margin-bottom: 8px; }
+.step-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--text); margin-bottom: 6px; }
+.step-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+.search-box { display: flex; gap: 10px; margin-bottom: 16px; }
+input[type="text"], textarea, select { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+input:focus, textarea:focus, select:focus { border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(74,158,82,0.12); }
+select option { background: var(--surface2); }
+textarea { resize: vertical; min-height: 70px; }
+.btn { background: linear-gradient(135deg, var(--green-dark), var(--green-mid)); border: none; border-radius: 10px; color: white; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; padding: 10px 22px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(45,110,53,0.3); white-space: nowrap; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(45,110,53,0.4); }
+.btn:active { transform: translateY(0); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-muted); box-shadow: none; }
+.btn-ghost:hover { border-color: var(--green-mid); color: var(--text); box-shadow: none; }
+.btn-gold { background: linear-gradient(135deg, #5c3d10, #a07028); box-shadow: 0 4px 12px rgba(201,168,76,0.2); border: 1px solid rgba(201,168,76,0.3); }
+.btn-gold:hover { box-shadow: 0 6px 16px rgba(201,168,76,0.35); }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+.btn-danger { background: linear-gradient(135deg, #3d1515, #7a2828); box-shadow: none; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.photo-option { border: 2px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s; position: relative; background: var(--surface2); }
+.photo-option:hover { border-color: var(--green-mid); transform: scale(1.02); }
+.photo-option.selected { border-color: var(--green-light); box-shadow: 0 0 0 3px rgba(126,200,122,0.2); }
+.photo-option img { width: 100%; height: 130px; object-fit: cover; display: block; background: var(--surface2); }
+.photo-option .photo-label { padding: 8px 10px; font-size: 12px; font-weight: 500; color: var(--text); text-align: center; line-height: 1.3; }
+.photo-option .photo-sub { font-size: 10px; color: var(--text-muted); text-align: center; padding: 0 8px 8px; font-style: italic; }
+.photo-option .check-overlay { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--green-light); color: var(--bg); display: none; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+.photo-option.selected .check-overlay { display: flex; }
+.photo-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 40px; color: var(--text-muted); font-size: 14px; }
+.qa-list { display: flex; flex-direction: column; gap: 18px; }
+.qa-item { display: flex; flex-direction: column; gap: 8px; }
+.qa-label { font-size: 14px; font-weight: 500; color: var(--text); }
+.qa-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.qa-opt { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 8px 16px; cursor: pointer; transition: all 0.2s; }
+.qa-opt:hover { border-color: var(--green-mid); color: var(--text); }
+.qa-opt.selected { background: var(--green-dark); border-color: var(--green-light); color: var(--green-light); }
+.care-plan { background: linear-gradient(135deg, rgba(20,35,22,0.9), rgba(14,26,18,0.9)); border: 1px solid rgba(126,200,122,0.2); border-radius: 14px; padding: 24px; }
+.care-plan-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.care-plant-thumb { width: 64px; height: 64px; border-radius: 12px; overflow: hidden; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+.care-plant-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.care-plan-name { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text); }
+.care-plan-sci { font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 2px; }
+.care-sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.care-section { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.care-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 6px; }
+.care-section-content { font-size: 13px; color: var(--text); line-height: 1.5; }
+.ai-advisor { background: linear-gradient(135deg, rgba(45,35,15,0.8), rgba(30,46,34,0.8)); border: 1px solid rgba(201,168,76,0.3); border-radius: var(--radius); padding: 28px; margin-bottom: 28px; }
+.ai-orb { width: 44px; height: 44px; background: radial-gradient(circle at 40% 35%, var(--gold), #7a5020); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 20px rgba(201,168,76,0.3); animation: pulse-glow 3s ease-in-out infinite; flex-shrink: 0; }
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 20px rgba(201,168,76,0.3); } 50% { box-shadow: 0 0 35px rgba(201,168,76,0.5); } }
+.quick-questions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.quick-q { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2); border-radius: 20px; color: var(--sand); font-size: 12px; padding: 6px 14px; cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+.quick-q:hover { background: rgba(201,168,76,0.18); border-color: rgba(201,168,76,0.4); }
+.ai-response { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; font-size: 14px; line-height: 1.8; color: var(--text); display: none; margin-top: 16px; }
+.ai-response.visible { display: block; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: dot-bounce 1.4s ease-in-out infinite; }
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+.empty-state p { font-size: 14px; line-height: 1.6; }
+.none-option { padding: 12px; background: var(--surface2); border: 1px dashed var(--border); border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--text-muted); font-size: 13px; margin-bottom: 16px; }
+.none-option:hover { border-color: var(--green-mid); color: var(--text); }
+label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); font-weight: 500; }
+.form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+@media (max-width: 600px) {
+  h1 { font-size: 20px; }
+  .photo-grid { grid-template-columns: repeat(2, 1fr); }
+  .wizard-body { padding: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <h1>Jardín Verde<span>Mi colección de plantas</span></h1>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon">🌱</div><div><div class="stat-num" id="count-seeds">0</div><div class="stat-label">Semillas</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🏠</div><div><div class="stat-num" id="count-interior">0</div><div class="stat-label">Interior</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🌳</div><div><div class="stat-num" id="count-exterior">0</div><div class="stat-label">Exterior</div></div></div>
+    <div class="stat-card"><div class="stat-icon">🌿</div><div><div class="stat-num" id="count-total">0</div><div class="stat-label">Total</div></div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('coleccion')">🌿 Colección</button>
+    <button class="tab-btn" onclick="switchTab('anadir')">＋ Añadir planta</button>
+    <button class="tab-btn" onclick="switchTab('consejos')">✦ Consejero</button>
+  </div>
+
+  <!-- COLECCIÓN -->
+  <div class="section active" id="tab-coleccion">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterPlants('all',this)">🌿 Todas</button>
+      <button class="filter-btn" onclick="filterPlants('interior',this)">🏠 Interior</button>
+      <button class="filter-btn" onclick="filterPlants('exterior',this)">🌳 Exterior</button>
+      <button class="filter-btn" onclick="filterPlants('semilla',this)">🌱 Semillas</button>
+    </div>
+    <div class="plant-grid" id="plant-grid"></div>
+  </div>
+
+  <!-- AÑADIR / WIZARD -->
+  <div class="section" id="tab-anadir">
+    <div class="wizard">
+      <div class="wizard-header">
+        <div class="wizard-title" id="wiz-title">Identificar planta</div>
+        <div class="wizard-step-indicator">
+          <div class="step-dot active" id="dot-0"></div>
+          <div class="step-dot" id="dot-1"></div>
+          <div class="step-dot" id="dot-2"></div>
+          <div class="step-dot" id="dot-3"></div>
+        </div>
+      </div>
+      <div class="wizard-body">
+
+        <!-- STEP 0 -->
+        <div class="step active" id="step-0">
+          <div class="step-label">Paso 1 de 4</div>
+          <div class="step-title">¿Conoces la planta?</div>
+          <div class="step-desc">Escribe el nombre si lo sabes, o pulsa "Buscar por fotos" y te mostraré opciones visuales para identificarla.</div>
+          <div class="form-group">
+            <label>Nombre de la planta (opcional)</label>
+            <input type="text" id="plant-name-input" placeholder="Ej: Monstera, Pothos, Lavanda..." oninput="onNameInput()">
+          </div>
+          <div id="name-suggestions" style="display:none; margin-bottom:16px;">
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">Sugerencias rápidas:</div>
+            <div id="suggestions-list" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+            <button class="btn" onclick="goToPhotoSearch()">🔍 Buscar por fotos</button>
+            <button class="btn btn-ghost" id="btn-name-next" onclick="goFromName()" disabled>Continuar con este nombre →</button>
+          </div>
+        </div>
+
+        <!-- STEP 1 -->
+        <div class="step" id="step-1">
+          <div class="step-label">Paso 2 de 4</div>
+          <div class="step-title">¿Cuál se parece más?</div>
+          <div class="step-desc">Selecciona la imagen que más se asemeje a tu planta. Si ninguna coincide, puedes buscar de nuevo.</div>
+          <div id="photo-grid-container">
+            <div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando plantas...</div>
+          </div>
+          <div class="none-option" onclick="noneMatch()">🔄 Ninguna coincide — buscar de otra forma</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-ghost" onclick="goStep(0)">← Atrás</button>
+            <button class="btn" id="btn-photo-next" onclick="proceedToQA()" disabled>Esta es mi planta →</button>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step" id="step-2">
+          <div class="step-label">Paso 3 de 4</div>
+          <div class="step-title">Cuéntame un poco más</div>
+          <div class="step-desc" id="qa-desc">Responde estas preguntas para personalizar el plan de cuidados.</div>
+          <div id="qa-container" class="qa-list"></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+            <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
+            <button class="btn btn-gold" id="btn-generate" onclick="generateCarePlan()">✦ Generar plan de cuidados</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step" id="step-3">
+          <div class="step-label">Plan de cuidados listo</div>
+          <div class="step-title">Tu planta está lista</div>
+          <div class="step-desc">Aquí tienes el plan personalizado. Guárdala en tu colección cuando quieras.</div>
+          <div id="care-plan-container"></div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:20px;">
+            <button class="btn btn-ghost" onclick="goStep(2)">← Revisar respuestas</button>
+            <button class="btn" onclick="savePlant()">💾 Guardar en mi colección</button>
+            <button class="btn btn-ghost" onclick="resetWizard()">＋ Añadir otra planta</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSEJERO IA -->
+  <div class="section" id="tab-consejos">
+    <div class="ai-advisor">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div class="ai-orb">✦</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--sand);">Consejero de Jardín</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">IA · Responde según tu colección actual</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">Pregúntame sobre tus plantas. Conozco toda tu colección y te doy consejos adaptados a ella.</p>
+      <div class="quick-questions">
+        <button class="quick-q" onclick="setQ('Cuándo y cuánto debo regar mis plantas esta semana?')">💧 Cuándo regar</button>
+        <button class="quick-q" onclick="setQ('Qué plantas de mi colección combinan bien juntas?')">🌿 Combinaciones</button>
+        <button class="quick-q" onclick="setQ('Dame un calendario de cuidados para este mes')">📅 Calendario</button>
+        <button class="quick-q" onclick="setQ('Qué plagas debo vigilar en mis plantas?')">🐛 Plagas</button>
+        <button class="quick-q" onclick="setQ('Qué planta nueva me recomiendas añadir a mi colección?')">➕ Sugerencias</button>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <textarea id="ai-query" placeholder="Escribe tu pregunta..." style="min-height:56px;flex:1;"></textarea>
+        <button class="btn btn-gold" onclick="askAI()" style="align-self:flex-end;">✦ Preguntar</button>
+      </div>
+      <div id="ai-response" class="ai-response"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── API helper — llama al backend en /api/chat ───────────
+const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+
+async function callAI({ messages, system, max_tokens = 1000 }) {
+  const res = await fetch(`${API_BASE}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, system, max_tokens })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Error ${res.status}`);
+  }
+  const data = await res.json();
+  return data.content?.map(b => b.text || '').join('') || '';
+}
+
+// ── State ──────────────────────────────────────────
+let plants = JSON.parse(localStorage.getItem('jardin-verde-v2') || '[]');
+let currentFilter = 'all';
+let wiz = { step:0, query:'', selected:null, qaQuestions:[], answers:{}, carePlan:null, photoOptions:[] };
+
+function save() { localStorage.setItem('jardin-verde-v2', JSON.stringify(plants)); }
+
+// ── Stats ──────────────────────────────────────────
+function updateStats() {
+  document.getElementById('count-seeds').textContent    = plants.filter(p=>p.type==='semilla').length;
+  document.getElementById('count-interior').textContent = plants.filter(p=>p.type==='interior').length;
+  document.getElementById('count-exterior').textContent = plants.filter(p=>p.type==='exterior').length;
+  document.getElementById('count-total').textContent    = plants.length;
+}
+
+// ── Tabs ───────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  ['coleccion','anadir','consejos'].forEach((t,i)=>{
+    if(t===tab) document.querySelectorAll('.tab-btn')[i].classList.add('active');
+  });
+}
+
+// ── Collection ─────────────────────────────────────
+function renderPlants(filter) {
+  const grid = document.getElementById('plant-grid');
+  const list = filter==='all' ? plants : plants.filter(p=>p.type===filter);
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🪴</div><p>${filter==='all'?'Aún no tienes plantas.<br>¡Usa el asistente para añadir tu primera!':'No tienes plantas de este tipo aún.'}</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(p=>{
+    const thumb = p.imgUrl
+      ? `<div class="plant-card-img"><img src="${p.imgUrl}" alt="${p.name}" loading="lazy" onerror="this.parentElement.outerHTML='<div class=\\'plant-card-img placeholder\\'>${p.emoji||'🌿'}</div>'"></div>`
+      : `<div class="plant-card-img placeholder">${p.emoji||'🌿'}</div>`;
+    return `<div class="plant-card">
+      ${thumb}
+      <div class="plant-card-body">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+          <div><div class="plant-name">${p.name}</div>${p.scientific?`<div class="plant-scientific">${p.scientific}</div>`:''}</div>
+          <span class="type-badge badge-${p.type}">${p.type==='semilla'?'🌱 Semilla':p.type==='interior'?'🏠 Interior':'🌳 Exterior'}</span>
+        </div>
+        <div class="plant-meta">
+          ${p.care?.water?`<span class="meta-tag">💧 ${p.care.water}</span>`:''}
+          ${p.care?.light?`<span class="meta-tag">☀️ ${p.care.light}</span>`:''}
+          ${p.care?.difficulty?`<span class="meta-tag">🌱 ${p.care.difficulty}</span>`:''}
+        </div>
+        ${p.careSummary?`<div style="font-size:12px;color:var(--text-muted);line-height:1.6;border-left:2px solid var(--border);padding-left:10px;font-style:italic;margin-top:6px;">${p.careSummary}</div>`:''}
+        <div class="card-actions">
+          <button class="btn btn-sm btn-ghost" onclick="viewCare('${p.id}')">📋 Ver cuidados</button>
+          <button class="btn btn-sm btn-danger" onclick="deletePlant('${p.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterPlants(f, btn) {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPlants(f);
+}
+
+function deletePlant(id) {
+  if(!confirm('¿Eliminar esta planta?')) return;
+  plants=plants.filter(p=>p.id!==id); save(); updateStats(); renderPlants(currentFilter);
+}
+
+function viewCare(id) {
+  const p=plants.find(x=>x.id===id);
+  if(!p?.fullCare){alert('No hay plan de cuidados guardado para esta planta.');return;}
+  const m=document.createElement('div');
+  m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  m.innerHTML=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto;position:relative;">
+    <button onclick="this.closest('div[style]').remove()" style="position:absolute;top:14px;right:14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);padding:4px 10px;cursor:pointer;font-size:13px;">✕</button>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--sand);margin-bottom:16px;">📋 Cuidados: ${p.name}</div>
+    <div style="font-size:13px;color:var(--text);line-height:1.9;">${(p.fullCare).replace(/\n/g,'<br>')}</div>
+  </div>`;
+  m.onclick=e=>{if(e.target===m)m.remove();};
+  document.body.appendChild(m);
+}
+
+// ── Wizard ─────────────────────────────────────────
+function goStep(n) {
+  document.querySelectorAll('.step').forEach((s,i)=>s.classList.toggle('active',i===n));
+  document.querySelectorAll('.step-dot').forEach((d,i)=>{d.classList.toggle('active',i===n);d.classList.toggle('done',i<n);});
+  wiz.step=n;
+  const titles=['Identificar planta','Seleccionar planta','Personalizar','Plan de cuidados'];
+  document.getElementById('wiz-title').textContent=titles[n];
+}
+
+function resetWizard() {
+  wiz={step:0,query:'',selected:null,qaQuestions:[],answers:{},carePlan:null,photoOptions:[]};
+  document.getElementById('plant-name-input').value='';
+  document.getElementById('name-suggestions').style.display='none';
+  document.getElementById('btn-name-next').disabled=true;
+  document.getElementById('btn-photo-next').disabled=true;
+  document.getElementById('photo-grid-container').innerHTML='<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando plantas...</div>';
+  document.getElementById('qa-container').innerHTML='';
+  document.getElementById('care-plan-container').innerHTML='';
+  goStep(0);
+}
+
+// Step 0
+let nameTimeout;
+function onNameInput() {
+  const val=document.getElementById('plant-name-input').value.trim();
+  document.getElementById('btn-name-next').disabled=!val;
+  clearTimeout(nameTimeout);
+  if(val.length<2){document.getElementById('name-suggestions').style.display='none';return;}
+  nameTimeout=setTimeout(()=>{
+    const common=['Monstera deliciosa','Pothos dorado','Ficus lyrata','Sansevieria','Aloe vera','Lavanda','Romero','Begonia','Cactus','Orquídea Phalaenopsis','Helechos','Peperomia','Calathea','Geranio','Tomate','Albahaca','Suculentas','Palmera areca','Bambú','Limonero','Hiedra','Margarita','Rosa','Lavanda','Ficus benjamina'];
+    const m=common.filter(n=>n.toLowerCase().includes(val.toLowerCase())).slice(0,5);
+    if(m.length){
+      document.getElementById('suggestions-list').innerHTML=m.map(n=>`<button class="qa-opt" onclick="pickSuggestion('${n}')">${n}</button>`).join('');
+      document.getElementById('name-suggestions').style.display='block';
+    }
+  },500);
+}
+
+function pickSuggestion(name) {
+  document.getElementById('plant-name-input').value=name;
+  document.getElementById('btn-name-next').disabled=false;
+  document.getElementById('name-suggestions').style.display='none';
+}
+
+async function goFromName() {
+  const name=document.getElementById('plant-name-input').value.trim();
+  if(!name)return;
+  wiz.query=name;
+  goStep(1);
+  await loadPhotos(name);
+}
+
+async function goToPhotoSearch() {
+  const name=document.getElementById('plant-name-input').value.trim()||'plantas populares de interior y exterior';
+  wiz.query=name;
+  goStep(1);
+  await loadPhotos(name);
+}
+
+// Step 1: Photos
+async function loadPhotos(query) {
+  document.getElementById('btn-photo-next').disabled=true;
+  document.getElementById('photo-grid-container').innerHTML='<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando plantas...</div>';
+
+  let candidates=[];
+  try {
+    const txt=await callAI({
+      system:'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto adicional ni backticks.',
+      messages:[{role:'user',content:`Búsqueda: "${query}". Devuelve exactamente 6 plantas que coincidan o sean similares/relacionadas. Incluye variedad: algunas muy comunes y alguna menos conocida si encaja. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"búsqueda concisa en inglés para Unsplash, 3-5 palabras, sin comillas"}]. Varía las sugerencias.`}],
+      max_tokens:800
+    });
+    candidates=JSON.parse(txt.replace(/```json|```/g,'').trim());
+  } catch(e) {
+    candidates=[
+      {name:'Monstera',scientific:'Monstera deliciosa',emoji:'🌿',imgQuery:'monstera deliciosa tropical houseplant'},
+      {name:'Pothos',scientific:'Epipremnum aureum',emoji:'🍃',imgQuery:'golden pothos hanging plant'},
+      {name:'Sansevieria',scientific:'Sansevieria trifasciata',emoji:'🌱',imgQuery:'snake plant sansevieria'},
+      {name:'Ficus lyrata',scientific:'Ficus lyrata',emoji:'🌳',imgQuery:'fiddle leaf fig plant'},
+      {name:'Aloe vera',scientific:'Aloe vera',emoji:'🪴',imgQuery:'aloe vera succulent plant'},
+      {name:'Calathea',scientific:'Calathea orbifolia',emoji:'🌿',imgQuery:'calathea leaf tropical'},
+    ];
+  }
+
+  wiz.photoOptions=candidates.map((c,i)=>({
+    ...c,
+    imgUrl:`https://source.unsplash.com/featured/400x300/?${encodeURIComponent(c.imgQuery||c.name)}&t=${Date.now()+i*997}`
+  }));
+
+  document.getElementById('photo-grid-container').innerHTML=`<div class="photo-grid">
+    ${wiz.photoOptions.map((p,i)=>`
+      <div class="photo-option" id="popt-${i}" onclick="selectPhoto(${i})">
+        <div class="check-overlay">✓</div>
+        <img src="${p.imgUrl}" alt="${p.name}" onerror="this.style.display='none'">
+        <div class="photo-label">${p.emoji} ${p.name}</div>
+        <div class="photo-sub">${p.scientific}</div>
+      </div>`).join('')}
+  </div>`;
+}
+
+function selectPhoto(i) {
+  document.querySelectorAll('.photo-option').forEach(el=>el.classList.remove('selected'));
+  document.getElementById('popt-'+i).classList.add('selected');
+  wiz.selected=wiz.photoOptions[i];
+  document.getElementById('btn-photo-next').disabled=false;
+}
+
+function noneMatch() {
+  const name=prompt('Escribe el nombre o descripción de la planta:');
+  if(name){wiz.query=name;loadPhotos(name);}
+}
+
+// Step 2: Q&A
+async function proceedToQA() {
+  if(!wiz.selected)return;
+  goStep(2);
+  document.getElementById('qa-desc').textContent=`Cuéntame cómo vas a cuidar tu ${wiz.selected.name} para crear el plan ideal.`;
+  document.getElementById('qa-container').innerHTML='<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Preparando preguntas...</div>';
+
+  let questions=[];
+  try {
+    const txt=await callAI({
+      system:'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto ni backticks.',
+      messages:[{role:'user',content:`Para la planta "${wiz.selected.name}" (${wiz.selected.scientific}), genera exactamente 3 preguntas mínimas y esenciales para determinar su plan de cuidados personalizado. Escoge las preguntas más determinantes para esta especie específica. Cada pregunta tiene 3-4 opciones con emoji. JSON: [{"id":"q1","question":"texto","options":["opt1","opt2","opt3"]},...]`}],
+      max_tokens:700
+    });
+    questions=JSON.parse(txt.replace(/```json|```/g,'').trim());
+  } catch(e) {
+    questions=[
+      {id:'q1',question:'¿Dónde estará la planta?',options:['🏠 Interior','🌳 Exterior','🪟 Balcón / terraza']},
+      {id:'q2',question:'¿Cuánta luz natural recibe ese lugar?',options:['☀️ Sol directo varias horas','🌤 Luz indirecta brillante','🌥 Poca luz']},
+      {id:'q3',question:'¿Cuánta experiencia tienes con plantas?',options:['🌱 Principiante','🌿 Algo de experiencia','🌳 Bastante experiencia']},
+    ];
+  }
+
+  wiz.qaQuestions=questions;
+  wiz.answers={};
+  document.getElementById('qa-container').innerHTML=questions.map(q=>`
+    <div class="qa-item">
+      <div class="qa-label">${q.question}</div>
+      <div class="qa-options" id="opts-${q.id}">
+        ${q.options.map(o=>`<button class="qa-opt" onclick="pickAnswer('${q.id}','${o.replace(/'/g,"\\'")}',this)">${o}</button>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function pickAnswer(qid,val,btn) {
+  document.getElementById('opts-'+qid).querySelectorAll('.qa-opt').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  wiz.answers[qid]=val;
+}
+
+// Step 3: Care plan
+async function generateCarePlan() {
+  const btn=document.getElementById('btn-generate');
+  btn.disabled=true;
+  btn.innerHTML='<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Generando...';
+  goStep(3);
+  document.getElementById('care-plan-container').innerHTML='<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Creando tu plan personalizado...</div>';
+
+  const p=wiz.selected;
+  const qaText=wiz.qaQuestions.map(q=>`- ${q.question} → ${wiz.answers[q.id]||'No respondida'}`).join('\n');
+
+  let care={};
+  try {
+    const txt=await callAI({
+      system:'Eres un botánico experto. Responde SOLO con JSON válido, sin texto ni backticks.',
+      messages:[{role:'user',content:`Crea un plan de cuidados personalizado para: ${p.name} (${p.scientific})
+Respuestas del usuario:
+${qaText}
+
+JSON con esta estructura exacta:
+{
+  "type": "interior|exterior|semilla",
+  "difficulty": "Fácil|Moderado|Exigente",
+  "summary": "1-2 frases sobre esta planta y cómo se adapta al contexto del usuario",
+  "water": "frecuencia concreta (ej: Cada 7-10 días)",
+  "light": "necesidad concreta (ej: Luz indirecta brillante)",
+  "humidity": "nivel",
+  "temperature": "rango ideal °C",
+  "fertilizer": "indicación breve",
+  "repotting": "indicación breve",
+  "warnings": ["aviso específico 1", "aviso específico 2"],
+  "tips": ["consejo personalizado 1", "consejo personalizado 2", "consejo personalizado 3"],
+  "fullCare": "Plan completo en 5-7 párrafos con saltos de línea \\n, incluyendo riego detallado, luz, sustrato, abonado, problemas comunes y cómo prevenirlos, todo adaptado al contexto del usuario."
+}`}],
+      max_tokens:1400
+    });
+    care=JSON.parse(txt.replace(/```json|```/g,'').trim());
+  } catch(e) {
+    care={type:'interior',difficulty:'Moderado',summary:`${p.name} es una planta adaptable para tu situación.`,water:'Cada 7-10 días',light:'Luz indirecta',humidity:'Media',temperature:'18-25°C',fertilizer:'Mensual en primavera/verano',repotting:'Cada 2 años',warnings:['Evita el exceso de riego'],tips:['Revisa la tierra antes de regar','Limpia las hojas regularmente'],fullCare:'Cuida tu planta con moderación en el riego y buena iluminación indirecta.'};
+  }
+
+  wiz.carePlan=care;
+  renderCare(p,care);
+  btn.disabled=false;
+  btn.innerHTML='✦ Generar plan de cuidados';
+}
+
+function renderCare(p,care) {
+  const thumb=p.imgUrl
+    ?`<div class="care-plant-thumb"><img src="${p.imgUrl}" alt="${p.name}" onerror="this.parentElement.innerHTML='${p.emoji}'"></div>`
+    :`<div class="care-plant-thumb">${p.emoji}</div>`;
+
+  document.getElementById('care-plan-container').innerHTML=`
+    <div class="care-plan">
+      <div class="care-plan-header">
+        ${thumb}
+        <div>
+          <div class="care-plan-name">${p.name}</div>
+          <div class="care-plan-sci">${p.scientific}</div>
+          <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+            <span class="type-badge badge-${care.type}">${care.type==='semilla'?'🌱 Semilla':care.type==='interior'?'🏠 Interior':'🌳 Exterior'}</span>
+            <span class="type-badge" style="background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3);">⭐ ${care.difficulty}</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:16px;padding:12px 16px;background:var(--surface2);border-radius:10px;border-left:3px solid var(--green-mid);">${care.summary}</div>
+      <div class="care-sections">
+        <div class="care-section"><div class="care-section-title">💧 Riego</div><div class="care-section-content">${care.water}</div></div>
+        <div class="care-section"><div class="care-section-title">☀️ Luz</div><div class="care-section-content">${care.light}</div></div>
+        <div class="care-section"><div class="care-section-title">💦 Humedad</div><div class="care-section-content">${care.humidity}</div></div>
+        <div class="care-section"><div class="care-section-title">🌡️ Temperatura</div><div class="care-section-content">${care.temperature}</div></div>
+        <div class="care-section"><div class="care-section-title">🌱 Abono</div><div class="care-section-content">${care.fertilizer}</div></div>
+        <div class="care-section"><div class="care-section-title">🪴 Trasplante</div><div class="care-section-content">${care.repotting}</div></div>
+      </div>
+      ${care.warnings?.length?`<div style="background:rgba(180,100,30,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px;margin-bottom:12px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--gold);margin-bottom:8px;">⚠️ Ten en cuenta</div>${care.warnings.map(w=>`<div style="font-size:13px;color:var(--text);margin-bottom:4px;">· ${w}</div>`).join('')}</div>`:''}
+      ${care.tips?.length?`<div style="background:rgba(126,200,122,0.06);border:1px solid rgba(126,200,122,0.15);border-radius:10px;padding:14px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--green-light);margin-bottom:8px;">✦ Consejos personalizados</div>${care.tips.map(t=>`<div style="font-size:13px;color:var(--text);margin-bottom:6px;">• ${t}</div>`).join('')}</div>`:''}
+    </div>`;
+}
+
+function savePlant() {
+  const p=wiz.selected; const care=wiz.carePlan;
+  if(!p||!care)return;
+  plants.unshift({
+    id:Date.now().toString(), name:p.name, scientific:p.scientific,
+    emoji:p.emoji, imgUrl:p.imgUrl, type:care.type||'interior',
+    care:{water:care.water,light:care.light,difficulty:care.difficulty},
+    careSummary:care.summary, fullCare:care.fullCare,
+    addedAt:new Date().toISOString()
+  });
+  save(); updateStats(); resetWizard();
+  switchTab('coleccion'); renderPlants(currentFilter);
+}
+
+// ── AI Advisor ─────────────────────────────────────
+function setQ(q){document.getElementById('ai-query').value=q;}
+
+function buildCtx() {
+  if(!plants.length)return'El usuario no tiene plantas registradas aún.';
+  return`Plantas del usuario (${plants.length} total):\n`+plants.map(p=>`- ${p.name} (${p.scientific||'?'}): ${p.type}, riego: ${p.care?.water||'?'}, luz: ${p.care?.light||'?'}`).join('\n');
+}
+
+async function askAI() {
+  const q=document.getElementById('ai-query').value.trim(); if(!q)return;
+  const div=document.getElementById('ai-response');
+  div.className='ai-response visible';
+  div.innerHTML='<div style="display:flex;align-items:center;gap:10px;color:var(--text-muted);"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Consultando...</div>';
+  try {
+    const txt=await callAI({
+      system:`Eres un experto jardinero y botánico. Responde siempre en español, tono cálido y práctico. Usa emojis con moderación.\n\n${buildCtx()}`,
+      messages:[{role:'user',content:q}],
+      max_tokens:1000
+    });
+    div.innerHTML=txt.replace(/\n/g,'<br>');
+  } catch(e) {
+    div.innerHTML='<span style="color:#c07070">⚠️ Error de conexión. Inténtalo de nuevo.</span>';
+  }
+}
+
+document.getElementById('ai-query')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)askAI();});
+
+// ── Init ───────────────────────────────────────────
+updateStats();
+renderPlants('all');
+</script>
+</body>
+</html>
