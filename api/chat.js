@@ -17,7 +17,7 @@ function checkRateLimit(ip) {
     ipHits.set(ip, { count: 1, start: now });
     return true;
   }
-  if (entry.count >= MAX_HITS) return false;
+  if (entry.count >= MAX_HITS) {return false;}
   entry.count++;
   ipHits.set(ip, entry);
   return true;
@@ -32,8 +32,8 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Método no permitido' });
+  if (req.method === 'OPTIONS') {return res.status(200).end();}
+  if (req.method !== 'POST') {return res.status(405).json({ error: 'Método no permitido' });}
 
   // Rate limit
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || 'unknown';
