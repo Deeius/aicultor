@@ -2,7 +2,7 @@
 
 ## Overview
 
-Comprehensive integration test suite for the Jardín Verde project, ensuring production-ready quality for both backend API and frontend functionality.
+Comprehensive integration test suite for the AIcultor project, ensuring production-ready quality for both backend API and frontend functionality.
 
 ## Test Structure
 

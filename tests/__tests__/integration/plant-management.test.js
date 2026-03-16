@@ -95,33 +95,33 @@ describe('Integration: Plant Management', () => {
 
     test('should save plant to localStorage', () => {
       const plants = [validPlantData];
-      localStorage.setItem('jardin-verde-v2', JSON.stringify(plants));
+      localStorage.setItem('aicultor-v2', JSON.stringify(plants));
 
-      expect(localStorage.setItem).toHaveBeenCalledWith('jardin-verde-v2', JSON.stringify(plants));
-      expect(mockStorage['jardin-verde-v2']).toBe(JSON.stringify(plants));
+      expect(localStorage.setItem).toHaveBeenCalledWith('aicultor-v2', JSON.stringify(plants));
+      expect(mockStorage['aicultor-v2']).toBe(JSON.stringify(plants));
     });
 
     test('should load plants from localStorage', () => {
       const plants = [validPlantData];
-      mockStorage['jardin-verde-v2'] = JSON.stringify(plants);
+      mockStorage['aicultor-v2'] = JSON.stringify(plants);
 
-      const loaded = JSON.parse(localStorage.getItem('jardin-verde-v2'));
+      const loaded = JSON.parse(localStorage.getItem('aicultor-v2'));
 
       expect(loaded).toEqual(plants);
       expect(loaded[0].name).toBe('Monstera Deliciosa');
     });
 
     test('should handle empty localStorage', () => {
-      const result = localStorage.getItem('jardin-verde-v2');
+      const result = localStorage.getItem('aicultor-v2');
 
       expect(result).toBeNull();
     });
 
     test('should handle corrupted localStorage data', () => {
-      mockStorage['jardin-verde-v2'] = 'invalid json';
+      mockStorage['aicultor-v2'] = 'invalid json';
 
       expect(() => {
-        JSON.parse(localStorage.getItem('jardin-verde-v2'));
+        JSON.parse(localStorage.getItem('aicultor-v2'));
       }).toThrow();
     });
 
@@ -134,7 +134,7 @@ describe('Integration: Plant Management', () => {
       });
 
       expect(() => {
-        localStorage.setItem('jardin-verde-v2', 'x'.repeat(10000000));
+        localStorage.setItem('aicultor-v2', 'x'.repeat(10000000));
       }).toThrow('QuotaExceededError');
     });
   });

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jardín Verde · Mi Colección</title>
+    <title>AIcultor · Mi Colección</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap"
       rel="stylesheet"
@@ -800,7 +800,7 @@
       <header>
         <div class="logo">
           <div class="logo-icon">🌿</div>
-          <h1>Jardín Verde<span>Mi colección de plantas</span></h1>
+          <h1>AIcultor<span>Mi colección de plantas</span></h1>
         </div>
       </header>
 
@@ -1041,7 +1041,7 @@
       }
 
       // ── State ──────────────────────────────────────────
-      let plants = JSON.parse(localStorage.getItem('jardin-verde-v2') || '[]');
+      let plants = JSON.parse(localStorage.getItem('aicultor-v2') || '[]');
       let currentFilter = 'all';
       let wiz = {
         step: 0,
@@ -1054,7 +1054,7 @@
       };
 
       function save() {
-        localStorage.setItem('jardin-verde-v2', JSON.stringify(plants));
+        localStorage.setItem('aicultor-v2', JSON.stringify(plants));
       }
 
       // ── Stats ──────────────────────────────────────────

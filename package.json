@@ -1,8 +1,8 @@
 {
-  "name": "jardin-verde",
+  "name": "aicultor",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-powered plant collection manager with personalized care plans",
+  "description": "AIcultor - AI-powered plant collection manager with personalized care plans",
   "engines": {
     "node": ">=18"
   },

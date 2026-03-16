@@ -1,9 +1,9 @@
-# 🌿 Jardín Verde — Despliegue en Vercel
+# 🌿 AIcultor — Despliegue en Vercel
 
 Todo en **un solo repositorio**, un solo servicio. Sin Railway, sin configuración extra.
 
 ```
-jardin-verde/
+aicultor/
 ├── api/
 │   └── chat.js          ← Serverless Function (backend seguro)
 ├── frontend/
@@ -18,15 +18,15 @@ jardin-verde/
 ## Paso 1 · Subir a GitHub
 
 1. Crea una cuenta en https://github.com si no tienes
-2. Crea un repositorio nuevo llamado `jardin-verde` (puede ser privado)
+2. Crea un repositorio nuevo llamado `aicultor` (puede ser privado)
 3. Sube todo el contenido de esta carpeta:
 
 ```bash
-cd jardin-verde/
+cd aicultor/
 git init
 git add .
 git commit -m "🌿 Initial commit"
-git remote add origin https://github.com/TU_USUARIO/jardin-verde.git
+git remote add origin https://github.com/TU_USUARIO/aicultor.git
 git push -u origin main
 ```
 
@@ -36,12 +36,12 @@ git push -u origin main
 
 1. Ve a https://vercel.com y regístrate con tu cuenta de GitHub
 2. Clic en **"Add New Project"**
-3. Selecciona el repositorio `jardin-verde`
+3. Selecciona el repositorio `aicultor`
 4. En la pantalla de configuración **no cambies nada** — Vercel lo detecta solo
 5. Clic en **"Deploy"**
 
 En ~1 minuto tendrás una URL pública como:
-`https://jardin-verde.vercel.app`
+`https://aicultor.vercel.app`
 
 ---
 
@@ -52,10 +52,10 @@ Este es el único paso manual importante — aquí es donde guardas tu clave de 
 1. En Vercel, entra a tu proyecto → **Settings → Environment Variables**
 2. Añade estas dos variables:
 
-| Name                | Value                                                  |
-| ------------------- | ------------------------------------------------------ |
-| `ANTHROPIC_API_KEY` | `sk-ant-...tu clave...`                                |
-| `FRONTEND_URL`      | `https://jardin-verde.vercel.app` _(tu URL de Vercel)_ |
+| Name                | Value                                              |
+| ------------------- | -------------------------------------------------- |
+| `ANTHROPIC_API_KEY` | `sk-ant-...tu clave...`                            |
+| `FRONTEND_URL`      | `https://aicultor.vercel.app` _(tu URL de Vercel)_ |
 
 3. Clic en **Save**
 4. Ve a **Deployments** → en el último deployment clic en **⋯ → Redeploy**
