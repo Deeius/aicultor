@@ -885,9 +885,65 @@
             </div>
           </div>
           <div class="wizard-body">
-            <!-- STEP 0 -->
+            <!-- STEP 0: Plant Characteristics -->
             <div class="step active" id="step-0">
-              <div class="step-label">Paso 1 de 4</div>
+              <div class="step-label">Paso 1 de 5</div>
+              <div class="step-title">🌿 ¿Qué tipo de planta buscas?</div>
+              <div class="step-desc">
+                Cuéntame sobre la planta que tienes en mente para darte mejores sugerencias
+              </div>
+              <div class="form-group">
+                <label>Color de las hojas</label>
+                <select id="char-leaf-color">
+                  <option value="">Cualquiera</option>
+                  <option value="verde intenso">Verde intenso</option>
+                  <option value="verde claro">Verde claro</option>
+                  <option value="variegadas">Variegadas (varios colores)</option>
+                  <option value="púrpura o rojizas">Púrpura o rojizas</option>
+                  <option value="plateadas o grises">Plateadas o grises</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Forma de las hojas</label>
+                <select id="char-leaf-shape">
+                  <option value="">Cualquiera</option>
+                  <option value="hojas anchas y grandes">Anchas y grandes</option>
+                  <option value="hojas pequeñas y delicadas">Pequeñas y delicadas</option>
+                  <option value="hojas divididas o cortadas">Divididas o cortadas</option>
+                  <option value="hojas alargadas o lanceoladas">Alargadas o lanceoladas</option>
+                  <option value="hojas redondas">Redondas</option>
+                  <option value="suculentas o carnosas">Suculentas o carnosas</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Tamaño de planta preferido</label>
+                <select id="char-plant-size">
+                  <option value="">Cualquiera</option>
+                  <option value="pequeña (escritorio o estante)">
+                    Pequeña (escritorio o estante)
+                  </option>
+                  <option value="mediana (maceta de suelo)">Mediana (maceta de suelo)</option>
+                  <option value="grande (planta de declaración)">
+                    Grande (planta de declaración)
+                  </option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>¿Tiene flores?</label>
+                <select id="char-flowers">
+                  <option value="">No importa</option>
+                  <option value="sí, con flores">Sí, con flores</option>
+                  <option value="no, solo follaje">No, solo follaje</option>
+                </select>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px">
+                <button class="btn" onclick="proceedToSearch()">Siguiente: Buscar plantas →</button>
+              </div>
+            </div>
+
+            <!-- STEP 1 -->
+            <div class="step" id="step-1">
+              <div class="step-label">Paso 2 de 5</div>
               <div class="step-title">¿Conoces la planta?</div>
               <div class="step-desc">
                 Escribe el nombre si lo sabes, o pulsa "Buscar por fotos" y te mostraré opciones
@@ -916,9 +972,9 @@
               </div>
             </div>
 
-            <!-- STEP 1 -->
-            <div class="step" id="step-1">
-              <div class="step-label">Paso 2 de 4</div>
+            <!-- STEP 2 -->
+            <div class="step" id="step-2">
+              <div class="step-label">Paso 3 de 5</div>
               <div class="step-title">¿Cuál se parece más?</div>
               <div class="step-desc">
                 Selecciona la imagen que más se asemeje a tu planta. Si ninguna coincide, puedes
@@ -936,39 +992,39 @@
               </div>
               <div class="none-option" onclick="noneMatch()">🔄 Mostrar más plantas diferentes</div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap">
-                <button class="btn btn-ghost" onclick="goStep(0)">← Atrás</button>
+                <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
                 <button class="btn" id="btn-photo-next" onclick="proceedToQA()" disabled>
                   Esta es mi planta →
                 </button>
               </div>
             </div>
 
-            <!-- STEP 2 -->
-            <div class="step" id="step-2">
-              <div class="step-label">Paso 3 de 4</div>
+            <!-- STEP 3 -->
+            <div class="step" id="step-3">
+              <div class="step-label">Paso 4 de 5</div>
               <div class="step-title">Cuéntame un poco más</div>
               <div class="step-desc" id="qa-desc">
                 Responde estas preguntas para personalizar el plan de cuidados.
               </div>
               <div id="qa-container" class="qa-list"></div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px">
-                <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
+                <button class="btn btn-ghost" onclick="goStep(2)">← Atrás</button>
                 <button class="btn btn-gold" id="btn-generate" onclick="generateCarePlan()">
                   ✦ Generar plan de cuidados
                 </button>
               </div>
             </div>
 
-            <!-- STEP 3 -->
-            <div class="step" id="step-3">
-              <div class="step-label">Plan de cuidados listo</div>
+            <!-- STEP 4 -->
+            <div class="step" id="step-4">
+              <div class="step-label">Paso 5 de 5</div>
               <div class="step-title">Tu planta está lista</div>
               <div class="step-desc">
                 Aquí tienes el plan personalizado. Guárdala en tu colección cuando quieras.
               </div>
               <div id="care-plan-container"></div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px">
-                <button class="btn btn-ghost" onclick="goStep(2)">← Revisar respuestas</button>
+                <button class="btn btn-ghost" onclick="goStep(3)">← Revisar respuestas</button>
                 <button class="btn" onclick="savePlant()">💾 Guardar en mi colección</button>
                 <button class="btn btn-ghost" onclick="resetWizard()">＋ Añadir otra planta</button>
               </div>
@@ -1069,6 +1125,12 @@
         answers: {},
         carePlan: null,
         photoOptions: [],
+        characteristics: {
+          leafColor: '',
+          leafShape: '',
+          plantSize: '',
+          flowers: '',
+        },
       };
 
       function save() {
@@ -1179,6 +1241,7 @@
         });
         wiz.step = n;
         const titles = [
+          'Características',
           'Identificar planta',
           'Seleccionar planta',
           'Personalizar',
@@ -1196,6 +1259,12 @@
           answers: {},
           carePlan: null,
           photoOptions: [],
+          characteristics: {
+            leafColor: '',
+            leafShape: '',
+            plantSize: '',
+            flowers: '',
+          },
         };
         document.getElementById('plant-name-input').value = '';
         document.getElementById('name-suggestions').style.display = 'none';
@@ -1262,11 +1331,23 @@
         document.getElementById('name-suggestions').style.display = 'none';
       }
 
+      // Step 0: Collect characteristics and proceed to search
+      function proceedToSearch() {
+        // Collect characteristics from form
+        wiz.characteristics = {
+          leafColor: document.getElementById('char-leaf-color').value,
+          leafShape: document.getElementById('char-leaf-shape').value,
+          plantSize: document.getElementById('char-plant-size').value,
+          flowers: document.getElementById('char-flowers').value,
+        };
+        goStep(1);
+      }
+
       async function goFromName() {
         const name = document.getElementById('plant-name-input').value.trim();
         if (!name) return;
         wiz.query = name;
-        goStep(1);
+        goStep(2);
         await loadPhotos(name);
       }
 
@@ -1275,7 +1356,7 @@
           document.getElementById('plant-name-input').value.trim() ||
           'plantas populares de interior y exterior';
         wiz.query = name;
-        goStep(1);
+        goStep(2);
         await loadPhotos(name);
       }
 
@@ -1287,13 +1368,29 @@
 
         let candidates = [];
         try {
+          // Build characteristics filter string
+          const charFilters = [];
+          if (wiz.characteristics.leafColor)
+            charFilters.push(`Color de hojas: ${wiz.characteristics.leafColor}`);
+          if (wiz.characteristics.leafShape)
+            charFilters.push(`Forma de hojas: ${wiz.characteristics.leafShape}`);
+          if (wiz.characteristics.plantSize)
+            charFilters.push(`Tamaño: ${wiz.characteristics.plantSize}`);
+          if (wiz.characteristics.flowers)
+            charFilters.push(`Flores: ${wiz.characteristics.flowers}`);
+
+          const charString =
+            charFilters.length > 0
+              ? `\n\nCaracterísticas deseadas:\n${charFilters.join('\n')}`
+              : '';
+
           const txt = await callAI({
             system:
               'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto adicional ni backticks.',
             messages: [
               {
                 role: 'user',
-                content: `Búsqueda: "${query}". Devuelve exactamente 6 plantas DIFERENTES que coincidan o sean similares/relacionadas. Si la búsqueda incluye "alternativas" o "diferentes", sugiere plantas totalmente distintas a las típicas. Incluye variedad: algunas muy comunes y otras menos conocidas. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"término de búsqueda en inglés para fotos (ej: monstera deliciosa plant)"}]. Genera combinaciones únicas en cada petición.`,
+                content: `Búsqueda: "${query}". ${charString}\n\nDevuelve exactamente 6 plantas DIFERENTES que coincidan con la búsqueda Y las características especificadas. Si la búsqueda incluye "alternativas" o "diferentes", sugiere plantas totalmente distintas a las típicas. Prioriza plantas que cumplan con las características visuales solicitadas. Incluye variedad: algunas muy comunes y otras menos conocidas. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"término de búsqueda en inglés para fotos (ej: monstera deliciosa plant)"}]. Genera combinaciones únicas en cada petición.`,
               },
             ],
             max_tokens: 800,
@@ -1433,10 +1530,10 @@
         loadPhotos(searchQuery);
       }
 
-      // Step 2: Q&A
+      // Step 3: Q&A
       async function proceedToQA() {
         if (!wiz.selected) return;
-        goStep(2);
+        goStep(3);
         document.getElementById('qa-desc').textContent =
           `Cuéntame cómo vas a cuidar tu ${wiz.selected.name} para crear el plan ideal.`;
         document.getElementById('qa-container').innerHTML =
@@ -1506,7 +1603,7 @@
         btn.disabled = true;
         btn.innerHTML =
           '<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Generando...';
-        goStep(3);
+        goStep(4);
         document.getElementById('care-plan-container').innerHTML =
           '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Creando tu plan personalizado...</div>';
 
