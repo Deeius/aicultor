@@ -56,10 +56,10 @@ aicultor/
 │  ┌──────────────────────────────────────────────────────────┐  │
 │  │              frontend/index.html (SPA)                   │  │
 │  ├──────────────────────────────────────────────────────────┤  │
-│  │  • Wizard UI (4 steps)                                  │  │
+│  │  • Wizard UI (6 steps)                                  │  │
 │  │  • Plant Management                                     │  │
 │  │  • LocalStorage (aicultor-v2)                          │  │
-│  │  • LoremFlickr Image Integration                       │  │
+│  │  • Multi-source Images (Wikipedia/Pexels/Emoji)        │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                           │                                     │
 │                           │ fetch('/api/chat')                  │
@@ -102,11 +102,11 @@ aicultor/
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Data Flow: Plant Wizard Journey
+### Data Flow: Plant Wizard Journey (6 Steps)
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 1: Plant Characteristics (NEW - 2026-03-17)                │
+│ STEP 1: Plant Characteristics                                   │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  User selects visual preferences:                               │
@@ -129,54 +129,112 @@ aicultor/
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 2: Plant Search                                            │
+│ STEP 2: Plant Name Input                                        │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  User Query ──────────┐                                         │
-│  "monstera"           │                                         │
-│  + characteristics    │                                         │
-│                       ▼                                         │
-│              ┌─────────────────┐                                │
-│              │  callAI()       │                                │
-│              │  Enhanced prompt│                                │
-│              │  with filters   │                                │
-│              └────────┬────────┘                                │
+│  User enters plant name: "monstera"                             │
+│  OR clicks "Buscar por fotos" for general search                │
+│                       │                                         │
+│  wiz.query = "monstera"                                         │
+│                       │                                         │
+└──────────────────────┼──────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 3: Variety List (NEW - TEXT ONLY, FAST) 🚀                │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Query + characteristics ──┐                                    │
+│  "monstera"                 │                                   │
+│                             ▼                                   │
+│                    ┌─────────────────┐                          │
+│                    │  callAI()       │                          │
+│                    │  loadVarieties()│                          │
+│                    │  Request 12-20  │                          │
+│                    │  varieties      │                          │
+│                    └────────┬────────┘                          │
+│                             │                                   │
+│                             ▼                                   │
+│                    ┌─────────────────┐                          │
+│                    │ Claude Response │                          │
+│                    │ JSON Array      │                          │
+│                    └────────┬────────┘                          │
+│                             │                                   │
+│  TEXT ONLY - NO IMAGES YET  ▼                                   │
+│  [                                                              │
+│    {                                                            │
+│      name: "Monstera deliciosa",                                │
+│      scientific: "Monstera deliciosa",                          │
+│      emoji: "🌿",                                               │
+│      description: "La clásica costilla de Adán..."              │
+│    },                                                           │
+│    {                                                            │
+│      name: "Monstera adansonii",                                │
+│      scientific: "Monstera adansonii",                          │
+│      emoji: "🌿",                                               │
+│      description: "Hojas más pequeñas con agujeros..."          │
+│    },                                                           │
+│    ... 10-18 more varieties                                     │
+│  ]                          │                                   │
+│                             ▼                                   │
+│                    ┌─────────────────┐                          │
+│                    │ Display Cards   │                          │
+│                    │ Emoji + Text    │                          │
+│                    │ NO IMAGES       │                          │
+│                    └────────┬────────┘                          │
+│                             │                                   │
+│  User Selects Variety ──────┘                                   │
+│  wiz.selectedVariety = {...}                                    │
+│                                                                  │
+│  ⚡ 80% REDUCTION IN IMAGE API CALLS                            │
+│  Only fetch images for selected variety, not all options!       │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 4: Photo Confirmation (Images for selected variety only)   │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Selected Variety ────────┐                                     │
+│  "Monstera deliciosa"     │                                     │
+│                           ▼                                     │
+│                  ┌─────────────────┐                            │
+│                  │  callAI()       │                            │
+│                  │  Request 6      │                            │
+│                  │  different      │                            │
+│                  │  perspectives   │                            │
+│                  └────────┬────────┘                            │
+│                           │                                     │
+│  6 imgQuery variations:   ▼                                     │
+│  - "monstera deliciosa close up"                                │
+│  - "monstera deliciosa full plant"                              │
+│  - "monstera deliciosa leaf detail"                             │
+│  - "monstera deliciosa mature plant"                            │
+│  - "monstera deliciosa young plant"                             │
+│  - "monstera deliciosa growing"                                 │
+│                           │                                     │
+│                           ▼                                     │
+│              ┌─────────────────────────┐                        │
+│              │ Fetch Images (Parallel) │                        │
+│              │ Wikipedia → Pexels →    │                        │
+│              │ Emoji fallback          │                        │
+│              └────────┬────────────────┘                        │
 │                       │                                         │
 │                       ▼                                         │
 │              ┌─────────────────┐                                │
-│              │ Claude Response │                                │
-│              │ JSON Array      │                                │
+│              │ Display 6 Photos│                                │
+│              │ of SAME variety │                                │
 │              └────────┬────────┘                                │
 │                       │                                         │
-│    [                  ▼                                         │
-│      {                                                          │
-│        name: "Monstera",                                        │
-│        scientific: "Monstera deliciosa",                        │
-│        emoji: "🌿",                                             │
-│        imgQuery: "monstera deliciosa plant"                     │
-│      },                                                         │
-│      ... 5 more plants                                          │
-│    ]                  │                                         │
-│                       ▼                                         │
-│              ┌─────────────────┐                                │
-│              │ Generate Images │                                │
-│              │ LoremFlickr API │                                │
-│              └────────┬────────┘                                │
-│                       │                                         │
-│                       ▼                                         │
-│              ┌─────────────────┐                                │
-│              │ Display 6 Cards │                                │
-│              │ with Photos     │                                │
-│              └────────┬────────┘                                │
-│                       │                                         │
-│  User Selects Plant ──┘                                         │
+│  User Confirms ───────┘                                         │
 │  wiz.selected = {...}                                           │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 4: Q&A (Questions & Answers)                               │
+│ STEP 5: Q&A (Questions & Answers)                               │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Selected Plant ──────┐                                         │
@@ -211,7 +269,7 @@ aicultor/
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 5: Care Plan Generation                                    │
+│ STEP 6: Care Plan Generation                                    │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Plant + Answers ─────┐                                         │
@@ -223,33 +281,30 @@ aicultor/
 │                       │                                         │
 │                       ▼                                         │
 │              ┌─────────────────┐                                │
-│              │ Streaming Text  │                                │
-│              │ Markdown Format │                                │
+│              │ JSON Response   │                                │
+│              │ with care data  │                                │
 │              └────────┬────────┘                                │
 │                       │                                         │
-│  # Plan de Cuidados  │                                         │
-│  ## Riego             │                                         │
-│  - Frecuencia: ...    │                                         │
-│  ## Luz               │                                         │
-│  - Necesidad: ...     │                                         │
-│  ...                  │                                         │
-│                       ▼                                         │
+│  {                    │                                         │
+│    type: "interior",  │                                         │
+│    difficulty: "Fácil",│                                        │
+│    summary: "...",    │                                         │
+│    water: "Cada 7-10d",│                                        │
+│    light: "Indirecta",│                                         │
+│    ...                │                                         │
+│  }                    ▼                                         │
 │              ┌─────────────────┐                                │
 │              │ Display Plan    │                                │
+│              │ Cards & Sections│                                │
 │              └────────┬────────┘                                │
 │                       │                                         │
-│  User Confirms ───────┘                                         │
+│  User Saves Plant ────┘                                         │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ Step 3 is photo selection (see diagram above)                   │
-└──────────────────────────────────────────────────────────────────┘
-                       │
-                       ▼
-┌──────────────────────────────────────────────────────────────────┐
-│ STEP 6: Save to Collection                                      │
+│ Save to LocalStorage (aicultor-v2)                              │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Plant Data = {                                                 │
