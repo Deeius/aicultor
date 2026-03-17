@@ -2,6 +2,7 @@
   "name": "aicultor",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "AIcultor - AI-powered plant collection manager with personalized care plans",
   "engines": {
     "node": ">=18"
