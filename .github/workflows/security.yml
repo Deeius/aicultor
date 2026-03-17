@@ -39,7 +39,7 @@ jobs:
           cat audit-results.json
 
       - name: Upload audit results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-audit-results
           path: audit-results.json
@@ -152,7 +152,7 @@ jobs:
           fi
 
       - name: Upload security lint results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: eslint-security-results
           path: eslint-security.json
