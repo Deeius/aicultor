@@ -46,3 +46,7 @@ coverage/
 # Temporary files
 *.tmp
 .cache/
+
+# Claude AI local settings (keep CLAUDE.md in repo)
+.claude/
+.clinerules
