@@ -1340,21 +1340,37 @@
           ];
         }
 
-        // Generate image URLs using plant-specific search queries
-        // Using LoremFlickr for plant photos
-        wiz.photoOptions = candidates.map((c, i) => {
-          // Use imgQuery if provided, otherwise construct from name
-          const searchTerm = c.imgQuery || `${c.scientific || c.name} plant`;
-          const query = searchTerm.replace(/\s+/g, ',');
-          // LoremFlickr with plant search terms
-          const imgUrl = `https://loremflickr.com/300/200/${query}`;
+        // Fetch plant images from Wikipedia (high-quality, plant-specific)
+        const imagePromises = candidates.map(async c => {
+          try {
+            // Use scientific name for most accurate results
+            const searchTerm = (c.scientific || c.name).replace(/\s+/g, '_');
+            const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`;
 
-          return {
-            ...c,
-            imgUrl: imgUrl,
-            imgQuery: searchTerm,
-          };
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Not found');
+
+            const data = await response.json();
+            // Get image URL, prefer original_image or thumbnail
+            const imgUrl = data.thumbnail?.source || data.originalimage?.source || null;
+
+            return {
+              ...c,
+              imgUrl: imgUrl,
+              imgQuery: c.imgQuery || searchTerm,
+            };
+          } catch (e) {
+            // Fallback: no image URL (will show emoji)
+            return {
+              ...c,
+              imgUrl: null,
+              imgQuery: c.imgQuery || c.scientific || c.name,
+            };
+          }
         });
+
+        // Wait for all image fetches to complete
+        wiz.photoOptions = await Promise.all(imagePromises);
 
         document.getElementById('photo-grid-container').innerHTML = `<div class="photo-grid">
     ${wiz.photoOptions
@@ -1363,8 +1379,12 @@
       <div class="photo-option" id="popt-${i}" onclick="selectPhoto(${i})">
         <div class="check-overlay">✓</div>
         <div class="photo-display">
-          <img src="${p.imgUrl}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-          <div class="emoji-fallback" style="display:none">${p.emoji}</div>
+          ${
+            p.imgUrl
+              ? `<img src="${p.imgUrl}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+              : ''
+          }
+          <div class="emoji-fallback" style="display:${p.imgUrl ? 'none' : 'flex'}">${p.emoji}</div>
         </div>
         <div class="photo-label">${p.name}</div>
         <div class="photo-sub">${p.scientific}</div>

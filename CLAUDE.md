@@ -579,16 +579,16 @@ for await (const chunk of stream) {
 
 ### API Call Summary Table
 
-| Call Purpose      | Location    | Max Tokens | Response Format | Error Fallback        |
-| ----------------- | ----------- | ---------- | --------------- | --------------------- |
-| Plant Search      | ~line 1280  | 800        | JSON array      | Hardcoded 6 plants    |
-| Questions Gen     | ~line 1383  | 700        | JSON array      | Generic questions     |
-| Care Plan Gen     | ~line 1450  | 1500       | Markdown text   | Generic care plan     |
-| Chat Conversation | ~line 850   | 500        | Natural text    | Error message to user |
-| Image URLs        | LoremFlickr | N/A        | Image binary    | Emoji fallback        |
-| Rate Limit Check  | api/chat.js | N/A        | 429 status      | Block request         |
-| CORS Validation   | api/chat.js | N/A        | 403 status      | Block request         |
-| Input Validation  | api/chat.js | N/A        | 400 status      | Return error          |
+| Call Purpose      | Location      | Max Tokens | Response Format  | Error Fallback        |
+| ----------------- | ------------- | ---------- | ---------------- | --------------------- |
+| Plant Search      | ~line 1280    | 800        | JSON array       | Hardcoded 6 plants    |
+| Questions Gen     | ~line 1383    | 700        | JSON array       | Generic questions     |
+| Care Plan Gen     | ~line 1450    | 1500       | Markdown text    | Generic care plan     |
+| Chat Conversation | ~line 850     | 500        | Natural text     | Error message to user |
+| Image URLs        | Wikipedia API | N/A        | Image URL (JSON) | Emoji fallback        |
+| Rate Limit Check  | api/chat.js   | N/A        | 429 status       | Block request         |
+| CORS Validation   | api/chat.js   | N/A        | 403 status       | Block request         |
+| Input Validation  | api/chat.js   | N/A        | 400 status       | Return error          |
 
 ---
 
@@ -625,23 +625,49 @@ rateLimits.set(ip, [...recentRequests, now]);
 
 ### Image URL Generation
 
-**Service**: LoremFlickr (Flickr photo proxy)
+**Service**: Wikipedia/Wikimedia Commons API (free, reliable, plant-specific)
+
+**How it works**:
 
 ```javascript
-const searchTerm = plant.imgQuery || `${plant.scientific} plant`;
-const query = searchTerm.replace(/\s+/g, ',');
-const imgUrl = `https://loremflickr.com/300/200/${query}`;
+// Fetch plant image from Wikipedia using scientific name
+const searchTerm = (plant.scientific || plant.name).replace(/\s+/g, '_');
+const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`;
+
+const response = await fetch(url);
+const data = await response.json();
+
+// Get image URL from thumbnail or original
+const imgUrl = data.thumbnail?.source || data.originalimage?.source || null;
 ```
 
-**Fallback**: Emoji display if image fails to load
+**Benefits**:
+
+- ✅ High-quality botanical photos
+- ✅ Accurate to species (uses scientific names)
+- ✅ Free, no API key required
+- ✅ No rate limits for reasonable use
+- ✅ No random/incorrect images (like cats!)
+
+**Fallback Hierarchy**:
+
+1. Wikipedia thumbnail (if available)
+2. Wikipedia original image (if available)
+3. Emoji display (if Wikipedia has no image)
+
+**Display Logic**:
 
 ```html
-<img
-  src="${imgUrl}"
+${ plant.imgUrl ? `<img
+  src="${plant.imgUrl}"
+  alt="${plant.name}"
+  loading="lazy"
   onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
-/>
-<div class="emoji-fallback" style="display:none">${emoji}</div>
+/>` : '' }
+<div class="emoji-fallback" style="display:${plant.imgUrl ? 'none' : 'flex'}">${plant.emoji}</div>
 ```
+
+**Performance**: Uses `Promise.all()` to fetch all 6 images in parallel (~200-500ms total)
 
 ## Key Files & Purposes
 
@@ -650,7 +676,7 @@ const imgUrl = `https://loremflickr.com/300/200/${query}`;
 - **Lines 1-1000**: CSS styles (CSS variables, responsive design)
 - **Lines 1000-1700**: JavaScript (wizard flow, API calls, plant management)
 - **Storage**: LocalStorage key `aicultor-v2` (JSON array of plants)
-- **Image System**: LoremFlickr for plant photos with emoji fallbacks
+- **Image System**: Wikipedia/Wikimedia Commons API for plant photos with emoji fallbacks
 
 ### API Endpoint (`api/chat.js`)
 
@@ -783,8 +809,10 @@ All must pass before merge:
 
 ### Issue: Images not loading
 
-- LoremFlickr URL format: `https://loremflickr.com/300/200/{search,terms}`
-- Fallback to emoji if image fails
+- Wikipedia API format: `https://en.wikipedia.org/api/rest_v1/page/summary/{Scientific_Name}`
+- Returns thumbnail or original image URL
+- Fallback to emoji if Wikipedia has no image for that plant
+- Check network console for fetch errors
 
 ### Issue: Vercel deployment fails
 
