@@ -1,0 +1,336 @@
+name: Security Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities
+        run: |
+          echo "🔍 Checking for known security vulnerabilities..."
+          npm audit --json > audit-results.json || true
+          cat audit-results.json
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-results
+          path: audit-results.json
+
+  snyk-scan:
+    name: Snyk Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Upload Snyk results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: snyk.sarif
+        continue-on-error: true
+
+  trivy-scan:
+    name: Trivy Security Scanner
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy with table output
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+
+  eslint-security:
+    name: ESLint Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm install --save-dev eslint-plugin-security eslint-plugin-no-secrets
+
+      - name: Create security ESLint config
+        run: |
+          cat > .eslintrc.security.json << 'EOF'
+          {
+            "extends": ["./.eslintrc.json"],
+            "plugins": ["security", "no-secrets"],
+            "rules": {
+              "security/detect-object-injection": "error",
+              "security/detect-non-literal-regexp": "warn",
+              "security/detect-unsafe-regex": "error",
+              "security/detect-buffer-noassert": "error",
+              "security/detect-child-process": "warn",
+              "security/detect-disable-mustache-escape": "error",
+              "security/detect-eval-with-expression": "error",
+              "security/detect-no-csrf-before-method-override": "error",
+              "security/detect-non-literal-fs-filename": "warn",
+              "security/detect-non-literal-require": "warn",
+              "security/detect-possible-timing-attacks": "warn",
+              "security/detect-pseudoRandomBytes": "error",
+              "no-secrets/no-secrets": "error"
+            }
+          }
+          EOF
+
+      - name: Run security linting
+        run: npx eslint --config .eslintrc.security.json api/**/*.js --format json --output-file eslint-security.json || true
+
+      - name: Display security issues
+        run: |
+          if [ -f eslint-security.json ]; then
+            echo "🔒 Security Linting Results:"
+            cat eslint-security.json | jq '.'
+          fi
+
+      - name: Upload security lint results
+        uses: actions/upload-artifact@v4
+        with:
+          name: eslint-security-results
+          path: eslint-security.json
+
+  secrets-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified
+
+  xss-injection-tests:
+    name: XSS & Injection Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run XSS tests
+        run: |
+          echo "🔍 Testing XSS prevention..."
+          npm test -- --testNamePattern="XSS|sanitize|injection"
+
+      - name: Check for unsafe patterns
+        run: |
+          echo "🔍 Checking for unsafe patterns..."
+
+          # Check for innerHTML without sanitization
+          if grep -r "innerHTML.*=" frontend/ api/ --include="*.js" --include="*.html" | grep -v "sanitize" | grep -v "textContent"; then
+            echo "⚠️  Warning: Found innerHTML usage without sanitization"
+          else
+            echo "✅ No unsafe innerHTML patterns found"
+          fi
+
+          # Check for eval usage
+          if grep -r "eval(" frontend/ api/ --include="*.js"; then
+            echo "❌ Error: Found eval() usage"
+            exit 1
+          else
+            echo "✅ No eval() usage found"
+          fi
+
+          # Check for document.write
+          if grep -r "document.write" frontend/ --include="*.js" --include="*.html"; then
+            echo "⚠️  Warning: Found document.write usage"
+          else
+            echo "✅ No document.write found"
+          fi
+
+  cors-security:
+    name: CORS & Headers Security
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check CORS configuration
+        run: |
+          echo "🔍 Checking CORS security configuration..."
+
+          # Check for wildcard CORS
+          if grep -r "Access-Control-Allow-Origin.*\*" api/ --include="*.js"; then
+            echo "⚠️  Warning: Wildcard CORS detected"
+          else
+            echo "✅ No wildcard CORS found"
+          fi
+
+          # Check for security headers
+          if grep -r "X-Frame-Options\|X-Content-Type-Options\|Content-Security-Policy" api/ --include="*.js"; then
+            echo "✅ Security headers found"
+          else
+            echo "⚠️  Warning: Security headers not found"
+          fi
+
+      - name: Validate environment variable usage
+        run: |
+          echo "🔍 Checking for hardcoded secrets..."
+
+          # Check for potential API keys in code
+          if grep -r "sk-ant-\|api[_-]key.*=.*['\"]" api/ frontend/ --include="*.js" | grep -v "process.env"; then
+            echo "❌ Error: Potential hardcoded API key found"
+            exit 1
+          else
+            echo "✅ No hardcoded secrets found"
+          fi
+
+  rate-limit-tests:
+    name: Rate Limiting Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test rate limiting
+        run: |
+          echo "🔍 Testing rate limiting implementation..."
+          npm test -- --testNamePattern="rate limit"
+
+  security-report:
+    name: Security Report Summary
+    runs-on: ubuntu-latest
+    needs:
+      [
+        dependency-scan,
+        snyk-scan,
+        trivy-scan,
+        eslint-security,
+        secrets-scan,
+        xss-injection-tests,
+        cors-security,
+        rate-limit-tests,
+      ]
+    if: always()
+
+    steps:
+      - name: Generate Security Report
+        run: |
+          echo "# 🔒 Security Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Scan | ${{ needs.dependency-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Snyk Scan | ${{ needs.snyk-scan.result == 'success' && '✅ Passed' || '⚠️  Check Required' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trivy Scan | ${{ needs.trivy-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint Security | ${{ needs.eslint-security.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Scanning | ${{ needs.secrets-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| XSS/Injection Tests | ${{ needs.xss-injection-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CORS Security | ${{ needs.cors-security.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Rate Limit Tests | ${{ needs.rate-limit-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "🔒 Security scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check if all tests passed
+        run: |
+          if [ "${{ needs.dependency-scan.result }}" != "success" ] || \
+             [ "${{ needs.trivy-scan.result }}" != "success" ] || \
+             [ "${{ needs.eslint-security.result }}" != "success" ] || \
+             [ "${{ needs.secrets-scan.result }}" != "success" ] || \
+             [ "${{ needs.xss-injection-tests.result }}" != "success" ] || \
+             [ "${{ needs.cors-security.result }}" != "success" ] || \
+             [ "${{ needs.rate-limit-tests.result }}" != "success" ]; then
+            echo "❌ Some security tests failed. Please review the results."
+            exit 1
+          else
+            echo "✅ All security tests passed!"
+          fi
