@@ -924,9 +924,7 @@
                   &nbsp;Buscando plantas...
                 </div>
               </div>
-              <div class="none-option" onclick="noneMatch()">
-                🔄 Ninguna coincide — buscar de otra forma
-              </div>
+              <div class="none-option" onclick="noneMatch()">🔄 Mostrar más plantas diferentes</div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap">
                 <button class="btn btn-ghost" onclick="goStep(0)">← Atrás</button>
                 <button class="btn" id="btn-photo-next" onclick="proceedToQA()" disabled>
@@ -1285,7 +1283,7 @@
             messages: [
               {
                 role: 'user',
-                content: `Búsqueda: "${query}". Devuelve exactamente 6 plantas que coincidan o sean similares/relacionadas. Incluye variedad: algunas muy comunes y alguna menos conocida si encaja. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"búsqueda concisa en inglés para Unsplash, 3-5 palabras, sin comillas"}]. Varía las sugerencias.`,
+                content: `Búsqueda: "${query}". Devuelve exactamente 6 plantas DIFERENTES que coincidan o sean similares/relacionadas. Si la búsqueda incluye "alternativas" o "diferentes", sugiere plantas totalmente distintas a las típicas. Incluye variedad: algunas muy comunes y otras menos conocidas. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado"}]. Genera combinaciones únicas en cada petición.`,
               },
             ],
             max_tokens: 800,
@@ -1361,11 +1359,14 @@
       }
 
       function noneMatch() {
-        const name = prompt('Escribe el nombre o descripción de la planta:');
-        if (name) {
-          wiz.query = name;
-          loadPhotos(name);
-        }
+        // Show loading state
+        document.getElementById('photo-grid-container').innerHTML =
+          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando más opciones...</div>';
+
+        // Request different plant suggestions
+        // Add variation by requesting "alternative" or "different" plants
+        const searchQuery = wiz.query + ' (alternativas diferentes)';
+        loadPhotos(searchQuery);
       }
 
       // Step 2: Q&A
