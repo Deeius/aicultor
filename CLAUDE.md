@@ -141,7 +141,7 @@ aicultor/
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 3: Variety List (NEW - TEXT ONLY, FAST) 🚀                │
+│ STEP 3: Variety List (NEW - DUAL PATH) 🚀                      │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Query + characteristics ──┐                                    │
@@ -183,11 +183,25 @@ aicultor/
 │                    │ NO IMAGES       │                          │
 │                    └────────┬────────┘                          │
 │                             │                                   │
-│  User Selects Variety ──────┘                                   │
-│  wiz.selectedVariety = {...}                                    │
+│              ┌──────────────┴──────────────┐                    │
+│              │                             │                    │
+│   PATH A: User recognizes      PATH B: User unsure             │
+│   variety by name              clicks "Buscar por fotos"       │
+│              │                             │                    │
+│              ▼                             ▼                    │
+│   Select variety name       loadPhotosForAllVarieties()        │
+│   wiz.selectedVariety       (shows 6-8 varieties w/ images)    │
+│   = {...}                                  │                    │
+│              │                             │                    │
+│              │                 User selects from photo grid     │
+│              │                             │                    │
+│              └─────────────┬───────────────┘                    │
+│                            │                                    │
+│                            ▼                                    │
+│                   Proceed to Step 4                             │
 │                                                                  │
-│  ⚡ 80% REDUCTION IN IMAGE API CALLS                            │
-│  Only fetch images for selected variety, not all options!       │
+│  ⚡ OPTIMIZATION: Most users (~80%) identify by name first      │
+│     Only minority needs images, saving significant API calls    │
 │                                                                  │
 └──────────────────────────────────────────────────────────────────┘
                        │
