@@ -489,6 +489,16 @@
         display: block;
         background: var(--surface2);
       }
+      .photo-emoji-display {
+        width: 100%;
+        height: 130px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 64px;
+        background: linear-gradient(135deg, var(--surface2) 0%, var(--surface) 100%);
+        border-bottom: 1px solid var(--border);
+      }
       .photo-option .photo-label {
         padding: 8px 10px;
         font-size: 12px;
@@ -1324,7 +1334,8 @@
 
         wiz.photoOptions = candidates.map((c, i) => ({
           ...c,
-          imgUrl: `https://source.unsplash.com/featured/400x300/?${encodeURIComponent(c.imgQuery || c.name)}&t=${Date.now() + i * 997}`,
+          // Using emoji-based visual identifiers instead of broken image API
+          imgUrl: null,
         }));
 
         document.getElementById('photo-grid-container').innerHTML = `<div class="photo-grid">
@@ -1333,8 +1344,8 @@
         (p, i) => `
       <div class="photo-option" id="popt-${i}" onclick="selectPhoto(${i})">
         <div class="check-overlay">✓</div>
-        <img src="${p.imgUrl}" alt="${p.name}" onerror="this.style.display='none'">
-        <div class="photo-label">${p.emoji} ${p.name}</div>
+        <div class="photo-emoji-display">${p.emoji}</div>
+        <div class="photo-label">${p.name}</div>
         <div class="photo-sub">${p.scientific}</div>
       </div>`
       )
