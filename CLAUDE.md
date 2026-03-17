@@ -44,6 +44,605 @@ aicultor/
 └── package.json            # Dependencies & scripts
 ```
 
+## Architecture & Data Flow
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         USER BROWSER                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │              frontend/index.html (SPA)                   │  │
+│  ├──────────────────────────────────────────────────────────┤  │
+│  │  • Wizard UI (4 steps)                                  │  │
+│  │  • Plant Management                                     │  │
+│  │  • LocalStorage (aicultor-v2)                          │  │
+│  │  • LoremFlickr Image Integration                       │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                           │                                     │
+│                           │ fetch('/api/chat')                  │
+│                           │ POST with messages                  │
+│                           ▼                                     │
+└─────────────────────────────────────────────────────────────────┘
+                            │
+                            │ HTTPS
+                            │
+┌───────────────────────────▼─────────────────────────────────────┐
+│                    VERCEL PLATFORM                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │           Serverless Function: api/chat.js               │  │
+│  ├──────────────────────────────────────────────────────────┤  │
+│  │  1. CORS Validation (FRONTEND_URL)                      │  │
+│  │  2. Rate Limiting (60 req/15min per IP)                 │  │
+│  │  3. Input Validation (messages array)                   │  │
+│  │  4. Security Headers                                    │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                           │                                     │
+│                           │ @anthropic-ai/sdk                   │
+│                           ▼                                     │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │          Anthropic SDK Client                            │  │
+│  │  • API Key: process.env.ANTHROPIC_API_KEY              │  │
+│  │  • Model: claude-3-5-sonnet-20241022                   │  │
+│  │  • Streaming: text_stream                               │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                           │                                     │
+└───────────────────────────┼─────────────────────────────────────┘
+                            │ HTTPS (API)
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                   ANTHROPIC CLOUD API                           │
+│  • Claude 3.5 Sonnet Model                                     │
+│  • Streaming Response                                          │
+│  • Token counting & billing                                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow: Plant Wizard Journey
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 1: Plant Search                                            │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  User Query ──────────┐                                         │
+│  "monstera"           │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │  callAI()       │                                │
+│              │  System: Bot.   │                                │
+│              │  Msg: Search    │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ Claude Response │                                │
+│              │ JSON Array      │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│    [                  ▼                                         │
+│      {                                                          │
+│        name: "Monstera",                                        │
+│        scientific: "Monstera deliciosa",                        │
+│        emoji: "🌿",                                             │
+│        imgQuery: "monstera deliciosa plant"                     │
+│      },                                                         │
+│      ... 5 more plants                                          │
+│    ]                  │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ Generate Images │                                │
+│              │ LoremFlickr API │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ Display 6 Cards │                                │
+│              │ with Photos     │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│  User Selects Plant ──┘                                         │
+│  wiz.selected = {...}                                           │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 2: Q&A (Questions & Answers)                               │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Selected Plant ──────┐                                         │
+│  wiz.selected         │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │  callAI()       │                                │
+│              │  Generate 3 Qs  │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│                       ▼                                         │
+│    [                                                            │
+│      {                                                          │
+│        id: "q1",                                                │
+│        question: "¿Cuánta luz natural recibe?",                 │
+│        options: ["☀️ Mucha", "🌤️ Media", "🌑 Poca"]            │
+│      },                                                         │
+│      ... 2 more questions                                       │
+│    ]                  │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ User Answers    │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│  wiz.answers = {      │                                         │
+│    q1: "☀️ Mucha",   │                                         │
+│    q2: "💧 Normal",  │                                         │
+│    q3: "🌡️ Cálido"  │                                         │
+│  }                    │                                         │
+│                       │                                         │
+└───────────────────────┼──────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 3: Care Plan Generation                                    │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Plant + Answers ─────┐                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │  callAI()       │                                │
+│              │  Generate Plan  │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ Streaming Text  │                                │
+│              │ Markdown Format │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│  # Plan de Cuidados  │                                         │
+│  ## Riego             │                                         │
+│  - Frecuencia: ...    │                                         │
+│  ## Luz               │                                         │
+│  - Necesidad: ...     │                                         │
+│  ...                  │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ Display Plan    │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│  User Confirms ───────┘                                         │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 4: Save to Collection                                      │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Plant Data = {                                                 │
+│    id: UUID,                                                    │
+│    name: "Monstera",                                            │
+│    scientific: "Monstera deliciosa",                            │
+│    emoji: "🌿",                                                 │
+│    carePlan: "# Plan...",                                       │
+│    answers: {...},                                              │
+│    addedDate: "2026-03-17"                                      │
+│  }                                                              │
+│                       │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ LocalStorage    │                                │
+│              │ aicultor-v2     │                                │
+│              └────────┬────────┘                                │
+│                       │                                         │
+│  JSON.stringify([     │                                         │
+│    plantData,         │                                         │
+│    ...existingPlants  │                                         │
+│  ])                   │                                         │
+│                       ▼                                         │
+│              ┌─────────────────┐                                │
+│              │ Redirect to     │                                │
+│              │ My Collection   │                                │
+│              └─────────────────┘                                │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow: Chat with Plant
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ User clicks "💬 Chatear" on a plant card                        │
+└────────────────────────┬─────────────────────────────────────────┘
+                         │
+                         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Chat Modal Opens                                                 │
+│ • Plant context loaded                                           │
+│ • Chat history: []                                               │
+└────────────────────────┬─────────────────────────────────────────┘
+                         │
+                         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ User types message: "¿Cuándo debo regar?"                       │
+└────────────────────────┬─────────────────────────────────────────┘
+                         │
+                         ▼
+                ┌────────────────┐
+                │ callAI()       │
+                ├────────────────┤
+                │ System: Bot    │
+                │ Messages: [    │
+                │   {            │
+                │     role: user │
+                │     content:   │
+                │       Plant:   │
+                │       {name,   │
+                │        care}   │
+                │   },           │
+                │   ...history   │
+                │ ]              │
+                └────────┬───────┘
+                         │
+                         ▼
+                ┌────────────────┐
+                │ Stream Response│
+                └────────┬───────┘
+                         │
+                         ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ Display response in chat bubble                                 │
+│ • Append to chat history                                        │
+│ • Enable input for next message                                 │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## API Call Patterns
+
+### 1. Plant Search API Call
+
+**Purpose**: Get 6 plant suggestions based on user query
+
+**Location**: `frontend/index.html` ~line 1280
+
+```javascript
+const txt = await callAI({
+  system:
+    'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto adicional ni backticks.',
+  messages: [
+    {
+      role: 'user',
+      content: `Búsqueda: "${query}". Devuelve exactamente 6 plantas DIFERENTES que coincidan o sean similares/relacionadas. Si la búsqueda incluye "alternativas" o "diferentes", sugiere plantas totalmente distintas a las típicas. Incluye variedad: algunas muy comunes y otras menos conocidas. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"término de búsqueda en inglés para fotos (ej: monstera deliciosa plant)"}]. Genera combinaciones únicas en cada petición.`,
+    },
+  ],
+  max_tokens: 800,
+});
+```
+
+**Response Format**:
+
+```json
+[
+  {
+    "name": "Monstera",
+    "scientific": "Monstera deliciosa",
+    "emoji": "🌿",
+    "imgQuery": "monstera deliciosa tropical houseplant"
+  },
+  {
+    "name": "Pothos",
+    "scientific": "Epipremnum aureum",
+    "emoji": "🍃",
+    "imgQuery": "golden pothos hanging plant"
+  }
+  // ... 4 more plants
+]
+```
+
+**Error Handling**: Falls back to hardcoded list of 6 common plants
+
+---
+
+### 2. Questions Generation API Call
+
+**Purpose**: Generate 3 personalized questions for the selected plant
+
+**Location**: `frontend/index.html` ~line 1383
+
+```javascript
+const txt = await callAI({
+  system:
+    'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto ni backticks.',
+  messages: [
+    {
+      role: 'user',
+      content: `Para la planta "${wiz.selected.name}" (${wiz.selected.scientific}), genera exactamente 3 preguntas mínimas y esenciales para determinar su plan de cuidados personalizado. Escoge las preguntas más determinantes para esta especie específica. Cada pregunta tiene 3-4 opciones con emoji. JSON: [{"id":"q1","question":"texto","options":["opt1","opt2","opt3"]},...]`,
+    },
+  ],
+  max_tokens: 700,
+});
+```
+
+**Response Format**:
+
+```json
+[
+  {
+    "id": "q1",
+    "question": "¿Cuánta luz natural recibe tu espacio?",
+    "options": ["☀️ Mucha luz directa", "🌤️ Luz indirecta", "🌑 Poca luz"]
+  },
+  {
+    "id": "q2",
+    "question": "¿Con qué frecuencia puedes regar?",
+    "options": ["💧 Diario", "💦 2-3 veces/semana", "🌊 1 vez/semana"]
+  },
+  {
+    "id": "q3",
+    "question": "¿Qué temperatura tiene tu hogar?",
+    "options": ["🌡️ Cálido (>22°C)", "🌤️ Templado (18-22°C)", "❄️ Fresco (<18°C)"]
+  }
+]
+```
+
+**Error Handling**: Falls back to generic plant care questions
+
+---
+
+### 3. Care Plan Generation API Call
+
+**Purpose**: Generate personalized care plan based on plant and answers
+
+**Location**: `frontend/index.html` ~line 1450
+
+```javascript
+const response = await callAI({
+  system:
+    'Eres un botánico experto que crea planes de cuidado personalizados para plantas. Usa formato Markdown con emojis.',
+  messages: [
+    {
+      role: 'user',
+      content: `Planta: ${wiz.selected.name} (${wiz.selected.scientific})
+Condiciones del usuario:
+${Object.entries(wiz.answers)
+  .map(([qid, answer]) => {
+    const q = questions.find(x => x.id === qid);
+    return `- ${q?.question}: ${answer}`;
+  })
+  .join('\n')}
+
+Genera un plan de cuidados completo y personalizado en español. Incluye:
+- Resumen breve
+- Riego (frecuencia específica adaptada)
+- Luz (necesidades específicas)
+- Temperatura y humedad
+- Fertilización
+- Problemas comunes y soluciones
+- Tips especiales para esta especie
+
+Usa emojis y formato Markdown claro.`,
+    },
+  ],
+  max_tokens: 1500,
+});
+```
+
+**Response Format**: Markdown text with emojis
+
+```markdown
+# 🌿 Plan de Cuidados para Monstera
+
+## 📋 Resumen
+
+Tu Monstera deliciosa prosperará con luz indirecta brillante y riego moderado...
+
+## 💧 Riego
+
+- **Frecuencia**: Cada 5-7 días
+- **Método**: Regar cuando los primeros 5cm de tierra estén secos
+- **Cantidad**: Hasta que drene por los agujeros
+
+## ☀️ Luz
+
+- **Necesidad**: Luz indirecta brillante
+- **Ubicación ideal**: 2-3 metros de ventana orientada al este
+- **Evitar**: Luz solar directa (quema hojas)
+
+...
+```
+
+**Error Handling**: Generic care plan if API fails
+
+---
+
+### 4. Chat with Plant API Call
+
+**Purpose**: Conversational Q&A about specific plant care
+
+**Location**: `frontend/index.html` ~line 850
+
+```javascript
+const response = await callAI({
+  system: `Eres un botánico experto especializado en ${currentPlant.name}. Responde de forma concisa y práctica en español.`,
+  messages: [
+    {
+      role: 'user',
+      content: `Contexto de mi planta:
+Nombre: ${currentPlant.name}
+Nombre científico: ${currentPlant.scientific}
+Plan de cuidados actual:
+${currentPlant.carePlan}
+
+Mi pregunta: [user message]`,
+    },
+    // ... previous chat history
+  ],
+  max_tokens: 500,
+});
+```
+
+**Response Format**: Natural language text (streaming)
+
+**Chat History**: Maintains conversation context for follow-up questions
+
+---
+
+### 5. Core `callAI()` Function
+
+**Purpose**: Wrapper for Anthropic API calls
+
+**Location**: `frontend/index.html` ~line 1100
+
+```javascript
+async function callAI({ system, messages, max_tokens = 1024 }) {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      })),
+      system: system,
+      max_tokens: max_tokens,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.status}`);
+  }
+
+  // Stream handling
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    fullText += chunk;
+
+    // Optional: emit progress events
+    if (onProgress) onProgress(chunk);
+  }
+
+  return fullText;
+}
+```
+
+**Backend Handler**: `api/chat.js`
+
+```javascript
+// Rate limiting check
+if (requestCount > 60) {
+  return res.status(429).json({ error: 'Rate limit exceeded' });
+}
+
+// CORS validation
+const origin = req.headers.origin;
+if (allowedOrigin && origin !== allowedOrigin) {
+  return res.status(403).json({ error: 'CORS policy violation' });
+}
+
+// Input validation
+if (!messages || !Array.isArray(messages)) {
+  return res.status(400).json({ error: 'Invalid messages format' });
+}
+
+// Anthropic API call
+const client = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const stream = await client.messages.stream({
+  model: 'claude-3-5-sonnet-20241022',
+  max_tokens: max_tokens || 1024,
+  system: system,
+  messages: messages,
+});
+
+// Stream response back to client
+for await (const chunk of stream) {
+  if (chunk.type === 'content_block_delta') {
+    res.write(chunk.delta.text);
+  }
+}
+```
+
+---
+
+### API Call Summary Table
+
+| Call Purpose      | Location    | Max Tokens | Response Format | Error Fallback        |
+| ----------------- | ----------- | ---------- | --------------- | --------------------- |
+| Plant Search      | ~line 1280  | 800        | JSON array      | Hardcoded 6 plants    |
+| Questions Gen     | ~line 1383  | 700        | JSON array      | Generic questions     |
+| Care Plan Gen     | ~line 1450  | 1500       | Markdown text   | Generic care plan     |
+| Chat Conversation | ~line 850   | 500        | Natural text    | Error message to user |
+| Image URLs        | LoremFlickr | N/A        | Image binary    | Emoji fallback        |
+| Rate Limit Check  | api/chat.js | N/A        | 429 status      | Block request         |
+| CORS Validation   | api/chat.js | N/A        | 403 status      | Block request         |
+| Input Validation  | api/chat.js | N/A        | 400 status      | Return error          |
+
+---
+
+### Rate Limiting Details
+
+**Implementation**: In-memory Map per IP address
+
+```javascript
+const rateLimits = new Map();
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const MAX_REQUESTS = 60;
+
+// Check and update
+const now = Date.now();
+const windowStart = now - WINDOW_MS;
+const recentRequests = (rateLimits.get(ip) || []).filter(t => t > windowStart);
+
+if (recentRequests.length >= MAX_REQUESTS) {
+  return res.status(429).json({
+    error: 'Rate limit exceeded. Try again in 15 minutes.',
+  });
+}
+
+rateLimits.set(ip, [...recentRequests, now]);
+```
+
+**Limitations**:
+
+- Resets on serverless cold start
+- Shared across all API endpoints
+- Consider Redis for production
+
+---
+
+### Image URL Generation
+
+**Service**: LoremFlickr (Flickr photo proxy)
+
+```javascript
+const searchTerm = plant.imgQuery || `${plant.scientific} plant`;
+const query = searchTerm.replace(/\s+/g, ',');
+const imgUrl = `https://loremflickr.com/300/200/${query}`;
+```
+
+**Fallback**: Emoji display if image fails to load
+
+```html
+<img
+  src="${imgUrl}"
+  onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+/>
+<div class="emoji-fallback" style="display:none">${emoji}</div>
+```
+
 ## Key Files & Purposes
 
 ### Frontend (`frontend/index.html`)
