@@ -882,12 +882,14 @@
               <div class="step-dot" id="dot-1"></div>
               <div class="step-dot" id="dot-2"></div>
               <div class="step-dot" id="dot-3"></div>
+              <div class="step-dot" id="dot-4"></div>
+              <div class="step-dot" id="dot-5"></div>
             </div>
           </div>
           <div class="wizard-body">
             <!-- STEP 0: Plant Characteristics -->
             <div class="step active" id="step-0">
-              <div class="step-label">Paso 1 de 5</div>
+              <div class="step-label">Paso 1 de 6</div>
               <div class="step-title">🌿 ¿Qué tipo de planta buscas?</div>
               <div class="step-desc">
                 Cuéntame sobre la planta que tienes en mente para darte mejores sugerencias
@@ -943,7 +945,7 @@
 
             <!-- STEP 1 -->
             <div class="step" id="step-1">
-              <div class="step-label">Paso 2 de 5</div>
+              <div class="step-label">Paso 2 de 6</div>
               <div class="step-title">¿Conoces la planta?</div>
               <div class="step-desc">
                 Escribe el nombre si lo sabes, o pulsa "Buscar por fotos" y te mostraré opciones
@@ -972,9 +974,34 @@
               </div>
             </div>
 
-            <!-- STEP 2 -->
+            <!-- STEP 2: Variety List (NEW) -->
             <div class="step" id="step-2">
-              <div class="step-label">Paso 3 de 5</div>
+              <div class="step-label">Paso 3 de 6</div>
+              <div class="step-title">¿Qué variedad tienes?</div>
+              <div class="step-desc">
+                Estas son las variedades registradas. Selecciona la que mejor se ajuste a tu planta.
+              </div>
+              <div id="variety-list-container">
+                <div class="photo-loading">
+                  <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                  </div>
+                  &nbsp;Cargando variedades...
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px">
+                <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
+                <button class="btn" id="btn-variety-next" onclick="proceedToPhotos()" disabled>
+                  Ver fotos de esta variedad →
+                </button>
+              </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="step" id="step-3">
+              <div class="step-label">Paso 4 de 6</div>
               <div class="step-title">¿Cuál se parece más?</div>
               <div class="step-desc">
                 Selecciona la imagen que más se asemeje a tu planta. Si ninguna coincide, puedes
@@ -994,39 +1021,39 @@
                 🔄 Mostrar más plantas diferentes
               </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap">
-                <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
+                <button class="btn btn-ghost" onclick="goStep(2)">← Atrás</button>
                 <button class="btn" id="btn-photo-next" onclick="proceedToQA()" disabled>
                   Esta es mi planta →
                 </button>
               </div>
             </div>
 
-            <!-- STEP 3 -->
-            <div class="step" id="step-3">
-              <div class="step-label">Paso 4 de 5</div>
+            <!-- STEP 4 -->
+            <div class="step" id="step-4">
+              <div class="step-label">Paso 5 de 6</div>
               <div class="step-title">Cuéntame un poco más</div>
               <div class="step-desc" id="qa-desc">
                 Responde estas preguntas para personalizar el plan de cuidados.
               </div>
               <div id="qa-container" class="qa-list"></div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px">
-                <button class="btn btn-ghost" onclick="goStep(2)">← Atrás</button>
+                <button class="btn btn-ghost" onclick="goStep(3)">← Atrás</button>
                 <button class="btn btn-gold" id="btn-generate" onclick="generateCarePlan()">
                   ✦ Generar plan de cuidados
                 </button>
               </div>
             </div>
 
-            <!-- STEP 4 -->
-            <div class="step" id="step-4">
-              <div class="step-label">Paso 5 de 5</div>
+            <!-- STEP 5 -->
+            <div class="step" id="step-5">
+              <div class="step-label">Paso 6 de 6</div>
               <div class="step-title">Tu planta está lista</div>
               <div class="step-desc">
                 Aquí tienes el plan personalizado. Guárdala en tu colección cuando quieras.
               </div>
               <div id="care-plan-container"></div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px">
-                <button class="btn btn-ghost" onclick="goStep(3)">← Revisar respuestas</button>
+                <button class="btn btn-ghost" onclick="goStep(4)">← Revisar respuestas</button>
                 <button class="btn" onclick="savePlant()">💾 Guardar en mi colección</button>
                 <button class="btn btn-ghost" onclick="resetWizard()">＋ Añadir otra planta</button>
               </div>
@@ -1123,6 +1150,8 @@
         step: 0,
         query: '',
         selected: null,
+        selectedVariety: null, // Selected variety from the list
+        varietyOptions: [], // List of varieties
         qaQuestions: [],
         answers: {},
         carePlan: null,
@@ -1246,7 +1275,8 @@
         const titles = [
           'Características',
           'Identificar planta',
-          'Seleccionar planta',
+          'Seleccionar variedad',
+          'Confirmar con fotos',
           'Personalizar',
           'Plan de cuidados',
         ];
@@ -1258,6 +1288,8 @@
           step: 0,
           query: '',
           selected: null,
+          selectedVariety: null,
+          varietyOptions: [],
           qaQuestions: [],
           answers: {},
           carePlan: null,
@@ -1273,7 +1305,10 @@
         document.getElementById('plant-name-input').value = '';
         document.getElementById('name-suggestions').style.display = 'none';
         document.getElementById('btn-name-next').disabled = true;
+        document.getElementById('btn-variety-next').disabled = true;
         document.getElementById('btn-photo-next').disabled = true;
+        document.getElementById('variety-list-container').innerHTML =
+          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando variedades...</div>';
         document.getElementById('photo-grid-container').innerHTML =
           '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando plantas...</div>';
         document.getElementById('qa-container').innerHTML = '';
@@ -1351,9 +1386,9 @@
         const name = document.getElementById('plant-name-input').value.trim();
         if (!name) return;
         wiz.query = name;
-        wiz.searchIteration = 0; // Reset iteration counter for new search
+        wiz.searchIteration = 0;
         goStep(2);
-        await loadPhotos(name);
+        await loadVarieties(name);
       }
 
       async function goToPhotoSearch() {
@@ -1361,18 +1396,18 @@
           document.getElementById('plant-name-input').value.trim() ||
           'plantas populares de interior y exterior';
         wiz.query = name;
-        wiz.searchIteration = 0; // Reset iteration counter for new search
+        wiz.searchIteration = 0;
         goStep(2);
-        await loadPhotos(name);
+        await loadVarieties(name);
       }
 
-      // Step 1: Photos
-      async function loadPhotos(query) {
-        document.getElementById('btn-photo-next').disabled = true;
-        document.getElementById('photo-grid-container').innerHTML =
-          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando plantas...</div>';
+      // NEW: Load variety list (text only, no images)
+      async function loadVarieties(query) {
+        document.getElementById('btn-variety-next').disabled = true;
+        document.getElementById('variety-list-container').innerHTML =
+          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Cargando variedades...</div>';
 
-        let candidates = [];
+        let varieties = [];
         try {
           // Build characteristics filter string
           const charFilters = [];
@@ -1390,73 +1425,160 @@
               ? `\n\nCaracterísticas deseadas:\n${charFilters.join('\n')}`
               : '';
 
-          // Detect if asking for species/varieties of a specific plant
-          const isVarietySearch = query.includes('especies y variedades');
-          const basePlantName = query.split('(')[0].trim(); // Extract base plant name
-
-          let promptInstructions;
-          if (isVarietySearch) {
-            // Asking for different species/varieties of the same genus
-            promptInstructions = `Devuelve exactamente 6 ESPECIES Y VARIEDADES DIFERENTES de "${basePlantName}". Incluye especies raras, híbridos, cultivares y variedades menos conocidas. Cada una debe ser una especie o variedad botanicamente distinta con su propio nombre científico completo. NO repitas especies que ya hayas sugerido antes. Prioriza diversidad: diferentes tamaños, colores, formas de hoja.`;
-          } else if (query.includes('alternativas')) {
-            // Asking for completely different plants
-            promptInstructions = `Devuelve exactamente 6 plantas COMPLETAMENTE DIFERENTES (no relacionadas con "${basePlantName}"). Sugiere géneros distintos, familias diferentes. NO repitas plantas que ya hayas sugerido antes.`;
-          } else {
-            // Initial search
-            promptInstructions = `Devuelve exactamente 6 plantas DIFERENTES que coincidan con la búsqueda Y las características especificadas. Incluye variedad: algunas muy comunes y otras menos conocidas.`;
-          }
-
           const txt = await callAI({
             system:
               'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto adicional ni backticks.',
             messages: [
               {
                 role: 'user',
-                content: `Búsqueda: "${query}". ${charString}\n\n${promptInstructions} Prioriza plantas que cumplan con las características visuales solicitadas. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"término de búsqueda en inglés para fotos (ej: monstera deliciosa plant)"}]. Genera combinaciones únicas y evita repeticiones.`,
+                content: `Para la búsqueda "${query}", devuelve una lista completa de variedades, especies y cultivares registrados. ${charString}
+
+Incluye:
+- Especies botánicas distintas
+- Cultivares y variedades comerciales
+- Híbridos conocidos
+- Variantes regionales
+- Tanto comunes como raras
+
+Devuelve al menos 12-20 opciones para que el usuario pueda elegir con precisión. JSON array: [{"name":"Nombre común completo","scientific":"Nombre científico completo","emoji":"emoji","description":"Breve descripción de características distintivas (1 frase)"}]`,
+              },
+            ],
+            max_tokens: 1500,
+          });
+          varieties = JSON.parse(txt.replace(/```json|```/g, '').trim());
+        } catch (e) {
+          console.error('Failed to load varieties:', e);
+          varieties = [
+            {
+              name: 'Monstera deliciosa',
+              scientific: 'Monstera deliciosa',
+              emoji: '🌿',
+              description: 'La clásica costilla de Adán, hojas grandes con perforaciones',
+            },
+            {
+              name: 'Monstera adansonii',
+              scientific: 'Monstera adansonii',
+              emoji: '🌿',
+              description: 'Hojas más pequeñas con agujeros, ideal para colgar',
+            },
+          ];
+        }
+
+        wiz.varietyOptions = varieties;
+
+        // Render variety list as clickable cards
+        document.getElementById('variety-list-container').innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto;">
+            ${varieties
+              .map(
+                (v, i) => `
+              <div class="variety-option" id="vopt-${i}" onclick="selectVariety(${i})" style="
+                background: var(--surface2);
+                border: 2px solid var(--border);
+                border-radius: 12px;
+                padding: 16px;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+              ">
+                <div style="font-size: 32px; flex-shrink: 0;">${v.emoji}</div>
+                <div style="flex: 1;">
+                  <div style="font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px;">
+                    ${v.name}
+                  </div>
+                  <div style="font-size: 11px; font-style: italic; color: var(--text-muted); margin-bottom: 6px;">
+                    ${v.scientific}
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+                    ${v.description}
+                  </div>
+                </div>
+                <div class="variety-check" style="
+                  width: 24px;
+                  height: 24px;
+                  border-radius: 50%;
+                  background: var(--green-light);
+                  color: var(--bg);
+                  display: none;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 14px;
+                  font-weight: bold;
+                  flex-shrink: 0;
+                ">✓</div>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `;
+
+        // Add hover styles dynamically
+        const style = document.createElement('style');
+        style.textContent = `
+          .variety-option:hover {
+            border-color: var(--green-mid);
+            background: var(--surface);
+            transform: translateX(4px);
+          }
+          .variety-option.selected {
+            border-color: var(--green-light);
+            background: rgba(126, 200, 122, 0.08);
+            box-shadow: 0 0 0 3px rgba(126, 200, 122, 0.15);
+          }
+          .variety-option.selected .variety-check {
+            display: flex !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+
+      function selectVariety(i) {
+        document.querySelectorAll('.variety-option').forEach(el => el.classList.remove('selected'));
+        document.getElementById('vopt-' + i).classList.add('selected');
+        wiz.selectedVariety = wiz.varietyOptions[i];
+        document.getElementById('btn-variety-next').disabled = false;
+      }
+
+      // Proceed to photos for the selected variety
+      async function proceedToPhotos() {
+        if (!wiz.selectedVariety) return;
+        goStep(3);
+        await loadPhotos(wiz.selectedVariety.scientific || wiz.selectedVariety.name);
+      }
+
+      // Step 3: Photos (now loads images for the specific selected variety)
+      async function loadPhotos(query) {
+        document.getElementById('btn-photo-next').disabled = true;
+        document.getElementById('photo-grid-container').innerHTML =
+          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando imágenes...</div>';
+
+        let candidates = [];
+        try {
+          const txt = await callAI({
+            system:
+              'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto adicional ni backticks.',
+            messages: [
+              {
+                role: 'user',
+                content: `Para la planta específica "${query}", devuelve exactamente 6 imágenes representativas mostrando diferentes ángulos, etapas de crecimiento o ejemplares. Todas deben ser de la MISMA especie/variedad: "${query}". JSON array: [{"name":"${query}","scientific":"${query}","emoji":"emoji apropiado","imgQuery":"término de búsqueda específico en inglés (ej: monstera deliciosa leaf close up)"}]. Varía los imgQuery para obtener diferentes perspectivas (ej: close up, full plant, leaf detail, mature plant, young plant, etc).`,
               },
             ],
             max_tokens: 800,
           });
           candidates = JSON.parse(txt.replace(/```json|```/g, '').trim());
         } catch (e) {
-          candidates = [
-            {
-              name: 'Monstera',
-              scientific: 'Monstera deliciosa',
-              emoji: '🌿',
-              imgQuery: 'monstera deliciosa tropical houseplant',
-            },
-            {
-              name: 'Pothos',
-              scientific: 'Epipremnum aureum',
-              emoji: '🍃',
-              imgQuery: 'golden pothos hanging plant',
-            },
-            {
-              name: 'Sansevieria',
-              scientific: 'Sansevieria trifasciata',
-              emoji: '🌱',
-              imgQuery: 'snake plant sansevieria',
-            },
-            {
-              name: 'Ficus lyrata',
-              scientific: 'Ficus lyrata',
-              emoji: '🌳',
-              imgQuery: 'fiddle leaf fig plant',
-            },
-            {
-              name: 'Aloe vera',
-              scientific: 'Aloe vera',
-              emoji: '🪴',
-              imgQuery: 'aloe vera succulent plant',
-            },
-            {
-              name: 'Calathea',
-              scientific: 'Calathea orbifolia',
-              emoji: '🌿',
-              imgQuery: 'calathea leaf tropical',
-            },
-          ];
+          // Fallback: create 6 entries for the same plant with different image queries
+          candidates = Array(6)
+            .fill(null)
+            .map((_, i) => ({
+              name: wiz.selectedVariety?.name || query,
+              scientific: wiz.selectedVariety?.scientific || query,
+              emoji: wiz.selectedVariety?.emoji || '🌿',
+              imgQuery: `${query} plant ${['close up', 'full plant', 'leaf detail', 'mature', 'young', 'growing'][i]}`,
+            }));
         }
 
         // Fetch plant images with fallback chain: Wikipedia → Pexels → Emoji
@@ -1533,20 +1655,10 @@
       .join('')}
   </div>`;
 
-        // Update "Show more" button text based on search type
+        // Update "Show more" button text for current variety
         const showMoreBtn = document.getElementById('show-more-btn');
-        if (showMoreBtn) {
-          const isSpecificPlant =
-            wiz.query.split(' ').length <= 2 &&
-            wiz.query.toLowerCase() !== 'plantas' &&
-            wiz.query.toLowerCase() !== 'plantas populares de interior y exterior';
-
-          if (isSpecificPlant) {
-            const plantName = wiz.query.split('(')[0].trim();
-            showMoreBtn.textContent = `🔄 Ver más especies de ${plantName}`;
-          } else {
-            showMoreBtn.textContent = '🔄 Mostrar más plantas diferentes';
-          }
+        if (showMoreBtn && wiz.selectedVariety) {
+          showMoreBtn.textContent = `🔄 Ver más fotos de ${wiz.selectedVariety.name}`;
         }
       }
 
@@ -1560,32 +1672,20 @@
       function noneMatch() {
         // Show loading state
         document.getElementById('photo-grid-container').innerHTML =
-          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando más opciones...</div>';
+          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando más fotos...</div>';
 
         wiz.searchIteration++;
 
-        // Detect if searching for a specific plant genus/species
-        const isSpecificPlant =
-          wiz.query.split(' ').length <= 2 &&
-          wiz.query.toLowerCase() !== 'plantas' &&
-          wiz.query.toLowerCase() !== 'plantas populares de interior y exterior';
-
-        let searchQuery;
-        if (isSpecificPlant) {
-          // Specific plant search - ask for different species/varieties
-          searchQuery = `${wiz.query} (diferentes especies y variedades, batch ${wiz.searchIteration})`;
-        } else {
-          // General search - ask for completely different plants
-          searchQuery = `${wiz.query} (alternativas completamente diferentes, batch ${wiz.searchIteration})`;
-        }
-
-        loadPhotos(searchQuery);
+        // We're now showing images for a specific selected variety
+        // Just load more images of the same variety
+        const query = wiz.selectedVariety?.scientific || wiz.selectedVariety?.name || wiz.query;
+        loadPhotos(query);
       }
 
-      // Step 3: Q&A
+      // Step 4: Q&A
       async function proceedToQA() {
         if (!wiz.selected) return;
-        goStep(3);
+        goStep(4);
         document.getElementById('qa-desc').textContent =
           `Cuéntame cómo vas a cuidar tu ${wiz.selected.name} para crear el plan ideal.`;
         document.getElementById('qa-container').innerHTML =
@@ -1649,13 +1749,13 @@
         wiz.answers[qid] = val;
       }
 
-      // Step 3: Care plan
+      // Step 5: Care plan
       async function generateCarePlan() {
         const btn = document.getElementById('btn-generate');
         btn.disabled = true;
         btn.innerHTML =
           '<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Generando...';
-        goStep(4);
+        goStep(5);
         document.getElementById('care-plan-container').innerHTML =
           '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Creando tu plan personalizado...</div>';
 
