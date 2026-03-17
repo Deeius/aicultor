@@ -990,7 +990,9 @@
                   &nbsp;Buscando plantas...
                 </div>
               </div>
-              <div class="none-option" onclick="noneMatch()">🔄 Mostrar más plantas diferentes</div>
+              <div class="none-option" id="show-more-btn" onclick="noneMatch()">
+                🔄 Mostrar más plantas diferentes
+              </div>
               <div style="display: flex; gap: 10px; flex-wrap: wrap">
                 <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
                 <button class="btn" id="btn-photo-next" onclick="proceedToQA()" disabled>
@@ -1131,6 +1133,7 @@
           plantSize: '',
           flowers: '',
         },
+        searchIteration: 0, // Track which batch of results we're on
       };
 
       function save() {
@@ -1265,6 +1268,7 @@
             plantSize: '',
             flowers: '',
           },
+          searchIteration: 0,
         };
         document.getElementById('plant-name-input').value = '';
         document.getElementById('name-suggestions').style.display = 'none';
@@ -1347,6 +1351,7 @@
         const name = document.getElementById('plant-name-input').value.trim();
         if (!name) return;
         wiz.query = name;
+        wiz.searchIteration = 0; // Reset iteration counter for new search
         goStep(2);
         await loadPhotos(name);
       }
@@ -1356,6 +1361,7 @@
           document.getElementById('plant-name-input').value.trim() ||
           'plantas populares de interior y exterior';
         wiz.query = name;
+        wiz.searchIteration = 0; // Reset iteration counter for new search
         goStep(2);
         await loadPhotos(name);
       }
@@ -1384,13 +1390,29 @@
               ? `\n\nCaracterísticas deseadas:\n${charFilters.join('\n')}`
               : '';
 
+          // Detect if asking for species/varieties of a specific plant
+          const isVarietySearch = query.includes('especies y variedades');
+          const basePlantName = query.split('(')[0].trim(); // Extract base plant name
+
+          let promptInstructions;
+          if (isVarietySearch) {
+            // Asking for different species/varieties of the same genus
+            promptInstructions = `Devuelve exactamente 6 ESPECIES Y VARIEDADES DIFERENTES de "${basePlantName}". Incluye especies raras, híbridos, cultivares y variedades menos conocidas. Cada una debe ser una especie o variedad botanicamente distinta con su propio nombre científico completo. NO repitas especies que ya hayas sugerido antes. Prioriza diversidad: diferentes tamaños, colores, formas de hoja.`;
+          } else if (query.includes('alternativas')) {
+            // Asking for completely different plants
+            promptInstructions = `Devuelve exactamente 6 plantas COMPLETAMENTE DIFERENTES (no relacionadas con "${basePlantName}"). Sugiere géneros distintos, familias diferentes. NO repitas plantas que ya hayas sugerido antes.`;
+          } else {
+            // Initial search
+            promptInstructions = `Devuelve exactamente 6 plantas DIFERENTES que coincidan con la búsqueda Y las características especificadas. Incluye variedad: algunas muy comunes y otras menos conocidas.`;
+          }
+
           const txt = await callAI({
             system:
               'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto adicional ni backticks.',
             messages: [
               {
                 role: 'user',
-                content: `Búsqueda: "${query}". ${charString}\n\nDevuelve exactamente 6 plantas DIFERENTES que coincidan con la búsqueda Y las características especificadas. Si la búsqueda incluye "alternativas" o "diferentes", sugiere plantas totalmente distintas a las típicas. Prioriza plantas que cumplan con las características visuales solicitadas. Incluye variedad: algunas muy comunes y otras menos conocidas. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"término de búsqueda en inglés para fotos (ej: monstera deliciosa plant)"}]. Genera combinaciones únicas en cada petición.`,
+                content: `Búsqueda: "${query}". ${charString}\n\n${promptInstructions} Prioriza plantas que cumplan con las características visuales solicitadas. JSON array: [{"name":"Nombre común en español","scientific":"Nombre científico","emoji":"emoji apropiado","imgQuery":"término de búsqueda en inglés para fotos (ej: monstera deliciosa plant)"}]. Genera combinaciones únicas y evita repeticiones.`,
               },
             ],
             max_tokens: 800,
@@ -1510,6 +1532,22 @@
       )
       .join('')}
   </div>`;
+
+        // Update "Show more" button text based on search type
+        const showMoreBtn = document.getElementById('show-more-btn');
+        if (showMoreBtn) {
+          const isSpecificPlant =
+            wiz.query.split(' ').length <= 2 &&
+            wiz.query.toLowerCase() !== 'plantas' &&
+            wiz.query.toLowerCase() !== 'plantas populares de interior y exterior';
+
+          if (isSpecificPlant) {
+            const plantName = wiz.query.split('(')[0].trim();
+            showMoreBtn.textContent = `🔄 Ver más especies de ${plantName}`;
+          } else {
+            showMoreBtn.textContent = '🔄 Mostrar más plantas diferentes';
+          }
+        }
       }
 
       function selectPhoto(i) {
@@ -1524,9 +1562,23 @@
         document.getElementById('photo-grid-container').innerHTML =
           '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando más opciones...</div>';
 
-        // Request different plant suggestions
-        // Add variation by requesting "alternative" or "different" plants
-        const searchQuery = wiz.query + ' (alternativas diferentes)';
+        wiz.searchIteration++;
+
+        // Detect if searching for a specific plant genus/species
+        const isSpecificPlant =
+          wiz.query.split(' ').length <= 2 &&
+          wiz.query.toLowerCase() !== 'plantas' &&
+          wiz.query.toLowerCase() !== 'plantas populares de interior y exterior';
+
+        let searchQuery;
+        if (isSpecificPlant) {
+          // Specific plant search - ask for different species/varieties
+          searchQuery = `${wiz.query} (diferentes especies y variedades, batch ${wiz.searchIteration})`;
+        } else {
+          // General search - ask for completely different plants
+          searchQuery = `${wiz.query} (alternativas completamente diferentes, batch ${wiz.searchIteration})`;
+        }
+
         loadPhotos(searchQuery);
       }
 
