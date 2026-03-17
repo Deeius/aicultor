@@ -1340,33 +1340,54 @@
           ];
         }
 
-        // Fetch plant images from Wikipedia (high-quality, plant-specific)
+        // Fetch plant images with fallback chain: Wikipedia → Pexels → Emoji
         const imagePromises = candidates.map(async c => {
+          let imgUrl = null;
+          let imageSource = 'emoji';
+
           try {
-            // Use scientific name for most accurate results
-            const searchTerm = (c.scientific || c.name).replace(/\s+/g, '_');
-            const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`;
+            // 1. Try Wikipedia first (scientific name lookup)
+            const wikiSearchTerm = (c.scientific || c.name).replace(/\s+/g, '_');
+            const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiSearchTerm)}`;
 
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Not found');
+            const wikiResponse = await fetch(wikiUrl);
+            if (wikiResponse.ok) {
+              const wikiData = await wikiResponse.json();
+              imgUrl = wikiData.thumbnail?.source || wikiData.originalimage?.source || null;
 
-            const data = await response.json();
-            // Get image URL, prefer original_image or thumbnail
-            const imgUrl = data.thumbnail?.source || data.originalimage?.source || null;
-
-            return {
-              ...c,
-              imgUrl: imgUrl,
-              imgQuery: c.imgQuery || searchTerm,
-            };
+              if (imgUrl) {
+                imageSource = 'wikipedia';
+              }
+            }
           } catch (e) {
-            // Fallback: no image URL (will show emoji)
-            return {
-              ...c,
-              imgUrl: null,
-              imgQuery: c.imgQuery || c.scientific || c.name,
-            };
+            console.log('Wikipedia fetch failed for', c.name);
           }
+
+          // 2. If Wikipedia didn't have an image, try Pexels API
+          if (!imgUrl) {
+            try {
+              const pexelsSearchTerm = c.imgQuery || `${c.scientific || c.name} plant`;
+              const pexelsUrl = `/api/image?query=${encodeURIComponent(pexelsSearchTerm)}`;
+
+              const pexelsResponse = await fetch(pexelsUrl);
+              if (pexelsResponse.ok) {
+                const pexelsData = await pexelsResponse.json();
+                if (pexelsData.imageUrl) {
+                  imgUrl = pexelsData.imageUrl;
+                  imageSource = 'pexels';
+                }
+              }
+            } catch (e) {
+              console.log('Pexels fetch failed for', c.name);
+            }
+          }
+
+          return {
+            ...c,
+            imgUrl: imgUrl,
+            imgQuery: c.imgQuery || c.scientific || c.name,
+            imageSource: imageSource,
+          };
         });
 
         // Wait for all image fetches to complete

@@ -669,6 +669,12 @@ ${ plant.imgUrl ? `<img
 
 **Performance**: Uses `Promise.all()` to fetch all 6 images in parallel (~200-500ms total)
 
+**UPDATE (2026-03-17)**: Now uses multi-source fallback chain:
+
+1. **Wikipedia** → 2. **Pexels API** (optional, requires `PEXELS_API_KEY`) → 3. **Emoji**
+
+See `/api/image.js` for Pexels integration.
+
 ## Key Files & Purposes
 
 ### Frontend (`frontend/index.html`)
@@ -676,7 +682,7 @@ ${ plant.imgUrl ? `<img
 - **Lines 1-1000**: CSS styles (CSS variables, responsive design)
 - **Lines 1000-1700**: JavaScript (wizard flow, API calls, plant management)
 - **Storage**: LocalStorage key `aicultor-v2` (JSON array of plants)
-- **Image System**: Wikipedia/Wikimedia Commons API for plant photos with emoji fallbacks
+- **Image System**: Multi-source fallback (Wikipedia → Pexels → Emoji)
 
 ### API Endpoint (`api/chat.js`)
 
@@ -688,9 +694,12 @@ ${ plant.imgUrl ? `<img
 ### Environment Variables
 
 ```bash
-ANTHROPIC_API_KEY=sk-ant-...    # Required for API
+ANTHROPIC_API_KEY=sk-ant-...    # Required for Claude API
 FRONTEND_URL=https://...        # Required for CORS (optional in dev)
+PEXELS_API_KEY=...              # Optional for image fallback (200 req/hour free tier)
 ```
+
+**Get Pexels API Key**: https://www.pexels.com/api/ (free, no credit card)
 
 ## Development Workflow
 
