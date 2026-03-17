@@ -991,10 +991,22 @@
                   &nbsp;Cargando variedades...
                 </div>
               </div>
-              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px">
+              <div
+                style="
+                  display: flex;
+                  gap: 10px;
+                  flex-wrap: wrap;
+                  margin-top: 16px;
+                  align-items: center;
+                "
+              >
                 <button class="btn btn-ghost" onclick="goStep(1)">← Atrás</button>
                 <button class="btn" id="btn-variety-next" onclick="proceedToPhotos()" disabled>
                   Ver fotos de esta variedad →
+                </button>
+                <div style="flex: 1"></div>
+                <button class="btn btn-ghost" onclick="skipToPhotoSearch()">
+                  🔍 No sé cuál es, buscar por fotos
                 </button>
               </div>
             </div>
@@ -1549,6 +1561,143 @@ Devuelve al menos 12-20 opciones para que el usuario pueda elegir con precisión
         await loadPhotos(wiz.selectedVariety.scientific || wiz.selectedVariety.name);
       }
 
+      // NEW: Skip variety selection and go directly to photo search with all varieties
+      async function skipToPhotoSearch() {
+        goStep(3);
+        // Load photos for multiple varieties (original behavior)
+        await loadPhotosForAllVarieties();
+      }
+
+      // Load photos for all varieties when user skips text selection
+      async function loadPhotosForAllVarieties() {
+        document.getElementById('btn-photo-next').disabled = true;
+        document.getElementById('photo-grid-container').innerHTML =
+          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando imágenes...</div>';
+
+        // Use the varieties we already loaded
+        let candidates = wiz.varietyOptions;
+
+        // If we don't have varieties yet, load a smaller set (6 popular ones)
+        if (!candidates || candidates.length === 0) {
+          try {
+            const charFilters = [];
+            if (wiz.characteristics.leafColor)
+              charFilters.push(`Color de hojas: ${wiz.characteristics.leafColor}`);
+            if (wiz.characteristics.leafShape)
+              charFilters.push(`Forma de hojas: ${wiz.characteristics.leafShape}`);
+            if (wiz.characteristics.plantSize)
+              charFilters.push(`Tamaño: ${wiz.characteristics.plantSize}`);
+            if (wiz.characteristics.flowers)
+              charFilters.push(`Flores: ${wiz.characteristics.flowers}`);
+
+            const charString =
+              charFilters.length > 0
+                ? `\n\nCaracterísticas deseadas:\n${charFilters.join('\n')}`
+                : '';
+
+            const txt = await callAI({
+              system:
+                'Eres un botánico experto. Responde SOLO con un array JSON válido, sin texto adicional ni backticks.',
+              messages: [
+                {
+                  role: 'user',
+                  content: `Para la búsqueda "${wiz.query}", devuelve exactamente 6 variedades representativas y populares. ${charString} JSON array: [{"name":"Nombre común","scientific":"Nombre científico","emoji":"emoji","description":"Descripción breve","imgQuery":"término de búsqueda en inglés"}]`,
+                },
+              ],
+              max_tokens: 800,
+            });
+            candidates = JSON.parse(txt.replace(/```json|```/g, '').trim());
+          } catch (e) {
+            console.error('Failed to load varieties for photo search:', e);
+            candidates = wiz.varietyOptions.slice(0, 6); // Fallback to first 6
+          }
+        } else {
+          // Take a subset if we have too many (max 8 for photo search)
+          candidates = candidates.slice(0, 8);
+        }
+
+        // Fetch plant images with fallback chain: Wikipedia → Pexels → Emoji
+        const imagePromises = candidates.map(async c => {
+          let imgUrl = null;
+          let imageSource = 'emoji';
+
+          try {
+            // 1. Try Wikipedia first (scientific name lookup)
+            const wikiSearchTerm = (c.scientific || c.name).replace(/\s+/g, '_');
+            const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wikiSearchTerm)}`;
+
+            const wikiResponse = await fetch(wikiUrl);
+            if (wikiResponse.ok) {
+              const wikiData = await wikiResponse.json();
+              imgUrl = wikiData.thumbnail?.source || wikiData.originalimage?.source || null;
+
+              if (imgUrl) {
+                imageSource = 'wikipedia';
+              }
+            }
+          } catch (e) {
+            console.log('Wikipedia fetch failed for', c.name);
+          }
+
+          // 2. If Wikipedia didn't have an image, try Pexels API
+          if (!imgUrl) {
+            try {
+              const pexelsSearchTerm = c.imgQuery || `${c.scientific || c.name} plant`;
+              const pexelsUrl = `/api/image?query=${encodeURIComponent(pexelsSearchTerm)}`;
+
+              const pexelsResponse = await fetch(pexelsUrl);
+              if (pexelsResponse.ok) {
+                const pexelsData = await pexelsResponse.json();
+                if (pexelsData.imageUrl) {
+                  imgUrl = pexelsData.imageUrl;
+                  imageSource = 'pexels';
+                }
+              }
+            } catch (e) {
+              console.log('Pexels fetch failed for', c.name);
+            }
+          }
+
+          return {
+            ...c,
+            imgUrl: imgUrl,
+            imgQuery: c.imgQuery || c.scientific || c.name,
+            imageSource: imageSource,
+          };
+        });
+
+        // Wait for all image fetches to complete
+        wiz.photoOptions = await Promise.all(imagePromises);
+
+        document.getElementById('photo-grid-container').innerHTML = `<div class="photo-grid">
+    ${wiz.photoOptions
+      .map(
+        (p, i) => `
+      <div class="photo-option" id="popt-${i}" onclick="selectPhoto(${i})">
+        <div class="check-overlay">✓</div>
+        <div class="photo-display">
+          ${
+            p.imgUrl
+              ? `<img src="${p.imgUrl}" alt="${p.name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+              : ''
+          }
+          <div class="emoji-fallback" style="display:${p.imgUrl ? 'none' : 'flex'}">${p.emoji}</div>
+        </div>
+        <div class="photo-label">${p.name}</div>
+        <div class="photo-sub">${p.scientific}</div>
+      </div>`
+      )
+      .join('')}
+  </div>`;
+
+        // Update "Show more" button text
+        const showMoreBtn = document.getElementById('show-more-btn');
+        if (showMoreBtn) {
+          const plantName = wiz.query.split('(')[0].trim();
+          showMoreBtn.textContent = `🔄 Ver más variedades de ${plantName}`;
+        }
+      }
+
       // Step 3: Photos (now loads images for the specific selected variety)
       async function loadPhotos(query) {
         document.getElementById('btn-photo-next').disabled = true;
@@ -1672,14 +1821,19 @@ Devuelve al menos 12-20 opciones para que el usuario pueda elegir con precisión
       function noneMatch() {
         // Show loading state
         document.getElementById('photo-grid-container').innerHTML =
-          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando más fotos...</div>';
+          '<div class="photo-loading"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>&nbsp;Buscando más opciones...</div>';
 
         wiz.searchIteration++;
 
-        // We're now showing images for a specific selected variety
-        // Just load more images of the same variety
-        const query = wiz.selectedVariety?.scientific || wiz.selectedVariety?.name || wiz.query;
-        loadPhotos(query);
+        // Check if we selected a specific variety or are in general photo search
+        if (wiz.selectedVariety) {
+          // We selected a variety - show more photos of that specific variety
+          const query = wiz.selectedVariety.scientific || wiz.selectedVariety.name;
+          loadPhotos(query);
+        } else {
+          // We skipped to photo search - show more varieties with photos
+          loadPhotosForAllVarieties();
+        }
       }
 
       // Step 4: Q&A
