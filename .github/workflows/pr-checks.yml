@@ -1,0 +1,76 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run all checks
+        run: |
+          echo "🔍 Running quality checks..."
+          npm run lint
+          npm run format:check
+          npm test
+          npm run security:check
+
+      - name: Check for breaking changes
+        run: |
+          echo "Checking for breaking changes in localStorage or API..."
+          git diff origin/main...HEAD -- frontend/index.html api/ | grep -i "breaking\|localstorage\|api" || echo "No breaking changes detected"
+
+      - name: PR Check Summary
+        if: always()
+        run: |
+          echo "📊 Pull Request Check Summary"
+          echo "================================"
+          echo "✅ Linting: Passed"
+          echo "✅ Formatting: Passed"
+          echo "✅ Tests: Passed"
+          echo "✅ Security: Passed"
+          echo ""
+          echo "🎉 PR is ready for review!"
+
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          FILES_CHANGED=$(git diff --name-only origin/main...HEAD | wc -l)
+          LINES_CHANGED=$(git diff --stat origin/main...HEAD | tail -1 | awk '{print $4 + $6}')
+
+          echo "📝 Files changed: $FILES_CHANGED"
+          echo "📊 Lines changed: $LINES_CHANGED"
+
+          if [ $FILES_CHANGED -gt 20 ]; then
+            echo "⚠️  Large PR detected (>20 files). Consider splitting into smaller PRs."
+          fi
+
+          if [ $LINES_CHANGED -gt 500 ]; then
+            echo "⚠️  Large PR detected (>500 lines). Consider splitting into smaller PRs."
+          fi

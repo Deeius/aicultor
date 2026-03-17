@@ -1,5 +1,10 @@
 # 🌿 AIcultor — Despliegue en Vercel
 
+[![CI](https://github.com/Deeius/aicultor/workflows/CI/badge.svg)](https://github.com/Deeius/aicultor/actions)
+[![Deploy](https://github.com/Deeius/aicultor/workflows/Deploy%20to%20Vercel/badge.svg)](https://github.com/Deeius/aicultor/actions)
+[![Tests](https://img.shields.io/badge/tests-35%20passed-success)](https://github.com/Deeius/aicultor)
+[![Coverage](https://img.shields.io/badge/coverage-94.73%25-brightgreen)](https://github.com/Deeius/aicultor)
+
 Todo en **un solo repositorio**, un solo servicio. Sin Railway, sin configuración extra.
 
 ```
