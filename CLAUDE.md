@@ -106,16 +106,40 @@ aicultor/
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 1: Plant Search                                            │
+│ STEP 1: Plant Characteristics (NEW - 2026-03-17)                │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  User selects visual preferences:                               │
+│  - Leaf color (green, variegated, purple, silver, etc.)         │
+│  - Leaf shape (broad, small, divided, round, succulent)         │
+│  - Plant size (small/desk, medium/floor, large/statement)       │
+│  - Flowers (yes/no/doesn't matter)                              │
+│                       │                                         │
+│                       ▼                                         │
+│  wiz.characteristics = {                                        │
+│    leafColor: "variegadas",                                     │
+│    leafShape: "hojas anchas y grandes",                         │
+│    plantSize: "mediana",                                        │
+│    flowers: "no, solo follaje"                                  │
+│  }                    │                                         │
+│                       │                                         │
+│  Click "Siguiente" ──┘                                         │
+│                                                                  │
+└──────────────────────────────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 2: Plant Search                                            │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  User Query ──────────┐                                         │
 │  "monstera"           │                                         │
+│  + characteristics    │                                         │
 │                       ▼                                         │
 │              ┌─────────────────┐                                │
 │              │  callAI()       │                                │
-│              │  System: Bot.   │                                │
-│              │  Msg: Search    │                                │
+│              │  Enhanced prompt│                                │
+│              │  with filters   │                                │
 │              └────────┬────────┘                                │
 │                       │                                         │
 │                       ▼                                         │
@@ -152,7 +176,7 @@ aicultor/
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 2: Q&A (Questions & Answers)                               │
+│ STEP 4: Q&A (Questions & Answers)                               │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Selected Plant ──────┐                                         │
@@ -187,7 +211,7 @@ aicultor/
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 3: Care Plan Generation                                    │
+│ STEP 5: Care Plan Generation                                    │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Plant + Answers ─────┐                                         │
@@ -220,7 +244,12 @@ aicultor/
                        │
                        ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ STEP 4: Save to Collection                                      │
+│ Step 3 is photo selection (see diagram above)                   │
+└──────────────────────────────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ STEP 6: Save to Collection                                      │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  Plant Data = {                                                 │
