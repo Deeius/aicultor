@@ -10,5 +10,5 @@ module.exports = {
   moduleNameMapper: {
     '^@anthropic-ai/sdk$': '<rootDir>/tests/mocks/anthropic.mock.js',
   },
-  transformIgnorePatterns: ['node_modules/(?!(@anthropic-ai)/)'],
+  transformIgnorePatterns: ['node_modules/(?!(@anthropic-ai|@exodus/bytes|html-encoding-sniffer)/)'],
 };
