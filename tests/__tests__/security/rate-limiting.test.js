@@ -323,7 +323,7 @@ describe('Security: Rate Limiting', () => {
       await Promise.all(promises);
 
       // At least some should be rate limited
-      const rateLimitedCalls = res.status.mock.calls.filter((call) => call[0] === 429);
+      const rateLimitedCalls = res.status.mock.calls.filter(call => call[0] === 429);
       expect(rateLimitedCalls.length).toBeGreaterThan(0);
     });
   });

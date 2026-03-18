@@ -31,7 +31,9 @@ global.fetch = mockFetch;
 const handler = require('../../../api/image.export');
 
 describe('API: /api/image endpoint', () => {
-  let req, res, testCounter = 0;
+  let req,
+    res,
+    testCounter = 0;
 
   beforeEach(() => {
     // Reset mocks

@@ -20,7 +20,9 @@ const { handler: chatHandler } = require('../../../api/chat.export');
 const imageHandler = require('../../../api/image.export');
 
 describe('Security: CORS Bypass Attempts', () => {
-  let req, res, testCounter = 0;
+  let req,
+    res,
+    testCounter = 0;
 
   beforeEach(() => {
     testCounter++;
@@ -167,10 +169,7 @@ describe('Security: CORS Bypass Attempts', () => {
       await chatHandler(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Methods',
-        'POST, OPTIONS'
-      );
+      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', 'POST, OPTIONS');
     });
 
     test('should set correct preflight headers', async () => {
@@ -185,10 +184,7 @@ describe('Security: CORS Bypass Attempts', () => {
 
       await chatHandler(req, res);
 
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'Access-Control-Allow-Headers',
-        'Content-Type'
-      );
+      expect(res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Headers', 'Content-Type');
     });
   });
 
@@ -209,7 +205,7 @@ describe('Security: CORS Bypass Attempts', () => {
 
       // Header should not be parsed with newlines
       const originSet = res.setHeader.mock.calls.find(
-        (call) => call[0] === 'Access-Control-Allow-Origin'
+        call => call[0] === 'Access-Control-Allow-Origin'
       );
       expect(originSet[1]).not.toContain('\n');
     });

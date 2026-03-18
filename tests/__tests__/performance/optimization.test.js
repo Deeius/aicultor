@@ -26,7 +26,7 @@ describe('Performance: Optimization Validation', () => {
       // If user selects same variety twice, should not fetch again
       const varietyCache = new Map();
 
-      const fetchVariety = (name) => {
+      const fetchVariety = name => {
         if (varietyCache.has(name)) {
           return { cached: true, data: varietyCache.get(name) };
         }
@@ -61,9 +61,9 @@ describe('Performance: Optimization Validation', () => {
 
       const loadedVarieties = new Set();
 
-      const loadMoreVarieties = (page) => {
+      const loadMoreVarieties = page => {
         const newVarieties = [`page${page}-variety1`, `page${page}-variety2`];
-        newVarieties.forEach((v) => loadedVarieties.add(v));
+        newVarieties.forEach(v => loadedVarieties.add(v));
         return { total: loadedVarieties.size, page };
       };
 
@@ -119,7 +119,8 @@ describe('Performance: Optimization Validation', () => {
       const avgImageCallsNewFlow =
         (userBehaviorSimulation.pathA * 6 + userBehaviorSimulation.pathB * 8) / 100;
 
-      const reduction = ((avgImageCallsOldFlow - avgImageCallsNewFlow) / avgImageCallsOldFlow) * 100;
+      const reduction =
+        ((avgImageCallsOldFlow - avgImageCallsNewFlow) / avgImageCallsOldFlow) * 100;
 
       expect(avgImageCallsNewFlow).toBeLessThan(avgImageCallsOldFlow);
       expect(reduction).toBeGreaterThan(30); // >30% reduction
@@ -141,7 +142,7 @@ describe('Performance: Optimization Validation', () => {
     test('should use emoji fallback without API calls', () => {
       let apiCalls = 0;
 
-      const loadImage = async (sources) => {
+      const loadImage = async sources => {
         for (const source of sources) {
           if (source === 'emoji') {
             return { source: 'emoji', url: null, apiCalls };
@@ -152,7 +153,7 @@ describe('Performance: Optimization Validation', () => {
         return { source: 'emoji', url: null, apiCalls };
       };
 
-      return loadImage(['wikipedia', 'pexels', 'emoji']).then((result) => {
+      return loadImage(['wikipedia', 'pexels', 'emoji']).then(result => {
         expect(result.apiCalls).toBe(2); // Wikipedia + Pexels attempts
         expect(result.source).toBe('emoji');
       });
@@ -161,7 +162,7 @@ describe('Performance: Optimization Validation', () => {
     test('should stop at first successful source', async () => {
       let apiCalls = 0;
 
-      const loadImage = async (sources) => {
+      const loadImage = async sources => {
         for (const source of sources) {
           apiCalls++;
           if (source === 'wikipedia') {
@@ -189,16 +190,16 @@ describe('Performance: Optimization Validation', () => {
         return searchIteration;
       };
 
-      const generateVarieties = (seed) => {
+      const generateVarieties = seed => {
         // Generate unique varieties based on seed
         return [`variety-${seed}-1`, `variety-${seed}-2`, `variety-${seed}-3`];
       };
 
       const firstBatch = generateVarieties(getVarietySeed());
-      firstBatch.forEach((v) => seenVarieties.add(v));
+      firstBatch.forEach(v => seenVarieties.add(v));
 
       const secondBatch = generateVarieties(getVarietySeed());
-      secondBatch.forEach((v) => seenVarieties.add(v));
+      secondBatch.forEach(v => seenVarieties.add(v));
 
       // All varieties should be unique
       expect(seenVarieties.size).toBe(6);

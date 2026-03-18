@@ -20,7 +20,9 @@ const { handler } = require('../../../api/chat.export');
 const imageHandler = require('../../../api/image.export');
 
 describe('Security: Input Validation', () => {
-  let req, res, testCounter = 0;
+  let req,
+    res,
+    testCounter = 0;
 
   beforeEach(() => {
     testCounter++;

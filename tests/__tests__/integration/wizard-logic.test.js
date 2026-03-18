@@ -221,17 +221,10 @@ describe('Integration: Wizard Logic & State', () => {
 
   describe('Photo Loading Logic', () => {
     test('should generate different image queries for same plant', () => {
-      const perspectives = [
-        'close up',
-        'full plant',
-        'leaf detail',
-        'mature',
-        'young',
-        'growing',
-      ];
+      const perspectives = ['close up', 'full plant', 'leaf detail', 'mature', 'young', 'growing'];
 
       const plantName = 'Monstera deliciosa';
-      const queries = perspectives.map((p) => `${plantName} ${p}`);
+      const queries = perspectives.map(p => `${plantName} ${p}`);
 
       expect(queries).toHaveLength(6);
       expect(queries[0]).toBe('Monstera deliciosa close up');
@@ -310,7 +303,7 @@ describe('Integration: Wizard Logic & State', () => {
         q3: 'E',
       };
 
-      const allAnswered = mockWiz.qaQuestions.every((q) => mockWiz.answers[q.id]);
+      const allAnswered = mockWiz.qaQuestions.every(q => mockWiz.answers[q.id]);
       expect(allAnswered).toBe(true);
     });
 
@@ -326,7 +319,7 @@ describe('Integration: Wizard Logic & State', () => {
       };
 
       const qaText = mockWiz.qaQuestions
-        .map((q) => `- ${q.question} → ${mockWiz.answers[q.id] || 'No respondida'}`)
+        .map(q => `- ${q.question} → ${mockWiz.answers[q.id] || 'No respondida'}`)
         .join('\n');
 
       expect(qaText).toContain('Location? → Interior');
@@ -392,7 +385,7 @@ describe('Integration: Wizard Logic & State', () => {
         'repotting',
       ];
 
-      const hasAllFields = requiredFields.every((field) => carePlan[field] !== undefined);
+      const hasAllFields = requiredFields.every(field => carePlan[field] !== undefined);
       expect(hasAllFields).toBe(true);
     });
   });
